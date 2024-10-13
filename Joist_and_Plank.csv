@@ -1,0 +1,13 @@
+Species,Grade,fb,fv,fc,fcp,ft,E,E05,Type
+Douglas Fir-Larch,SS,16.5,1.9,19,7,10.6,12500,8500,Sawn
+Douglas Fir-Larch,No1/No2,10,1.9,14,7,5.8,11000,7000,Sawn
+Douglas Fir-Larch,No2/Stud,4.6,1.6,7.3,7,2.1,10000,5500,Sawn
+Hem-Fir,SS,16,1.6,17.6,4.6,9.7,12000,8500,Sawn
+Hem-Fir,No1/No2,11,1.6,14.8,4.6,6.2,11000,7500,Sawn
+Hem-Fir,No2/Stud,7,1.6,9.2,4.6,3.2,10000,6000,Sawn
+Spruce-Pine-Fir,SS,16.5,1.5,14.5,5.3,8.6,10500,7500,Sawn
+Spruce-Pine-Fir,No1/No2,11.8,1.5,11.5,5.3,5.5,9500,6500,Sawn
+Spruce-Pine-Fir,No2/Stud,7,1.5,9,5.3,3.2,9000,5500,Sawn
+Northern Species,SS,10.6,1.3,13,3.5,6.2,7500,5500,Sawn
+Northern Species,No1/No2,7.6,1.3,10.4,3.5,4,7000,5000,Sawn
+Northern Species,No2/Stud,4.5,1.3,5.2,3.5,2,6500,4000,Sawn
