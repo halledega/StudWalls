@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Virtual Envivironments
+sw_env/
+sw_wenv/
+
 # Distribution / packaging
 .Python
 build/
