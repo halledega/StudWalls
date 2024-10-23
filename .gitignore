@@ -8,7 +8,7 @@ __pycache__/
 
 # Virtual Envivironments
 sw_env/
-sw_wenv/
+sw_wenv/
 
 # Distribution / packaging
 .Python
