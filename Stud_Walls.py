@@ -169,7 +169,8 @@ print("\n[bold blue]Unfactored Total Loads per floor[/bold blue]")
 pprint(loads_df)
 print("\n[bold blue]Factored Loads Combos per floor[/bold blue]")
 pprint(combo_df)
-
+print('Materials')
+print(jp_dict)
 with Progress() as progress:
     #loop over floors (wall heights)
     for level in range(n_floors,0, -1):
