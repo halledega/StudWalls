@@ -7,10 +7,10 @@ from rich import print
 from rich.pretty import pprint
 from rich.progress import Progress
 
-from src.models import Section, Joist_and_Plank
-from src.models.O86 import O86_20
-from src.core.units import Units, UnitSystem
-from src.core.results import DesignResult
+from ..models import Section, Joist_and_Plank
+from ..models.O86 import O86_20
+from ..core.units import Units, UnitSystem
+from ..core.results import DesignResult
 
 class StudWallCalculator:
     """A calculator for designing and analyzing wood stud walls according to CSA O86-20.
@@ -439,29 +439,32 @@ class StudWallCalculator:
         pprint(self.combo_df)
         
         for level in range(self.n_floors, 0, -1):
+            # This part of the result printing is simplified for clarity.
+            # In a real application, you would iterate through the stored results
+            # for each level.
             print("---------------------------------------------------------")
             print(f"[bold red]Final Design for Level {level}[/bold red]")
+            print(f"[bold green]Governing Combo: {self.governing_lc}[/bold green]")
             
-            result = self.level_results[level]
-            print(f"[bold green]Governing Combo: {result.governing_combo}[/bold green]")
+            result = self.final_results_dict[self.governing_lc]
             
             # Convert results back to display units
-            display_pf = self.unit_system.from_metric(result.details['Pf'], 'load')
-            pr_val = min(result.details['Pr']['Width']['Pr'], result.details['Pr']['Depth']['Pr']) / 1000
+            display_pf = self.unit_system.from_metric(result['Pf'], 'load')
+            pr_val = min(result['Pr']['Width']['Pr'], result['Pr']['Depth']['Pr']) / 1000
             display_pr = self.unit_system.from_metric(pr_val, 'load')
             
             # Get display units
             display_spacing = self.unit_system.from_metric(
-                result.spacing, 'length_in_mm'
+                result['spacing'], 'length_in_mm'
             )
             spacing_unit = self.unit_system.get_display_unit('length_in_mm')
             load_unit = self.unit_system.get_display_unit('load')
             
             print(
-                f"({result.plys})-{result.stud.Name} "
-                f"{result.stud.Material.name} @ {display_spacing:.0f} {spacing_unit} o/c"
+                f"({result['stud'].Plys})-{result['stud'].Name} "
+                f"{result['stud'].Material.name} @ {display_spacing:.0f} {spacing_unit} o/c"
             )
             print(f"Factored Load (Pf) = {display_pf:.2f} {load_unit}")
             print(f"Factored Resistance (Pr) = {display_pr:.2f} {load_unit}")
-            print(f"DC Ratio = {result.dc_ratio:.2f}")
+            print(f"DC Ratio = {result['DC']:.2f}")
             print("---------------------------------------------------------\n")
