@@ -1,5 +1,4 @@
 import csv
-import time
 from pathlib import Path
 
 import pandas as pd
@@ -12,47 +11,65 @@ from ..models.O86 import O86_20
 from ..core.units import Units, UnitSystem
 from ..core.results import DesignResult
 
+
 class StudWallCalculator:
-    """A calculator for designing and analyzing wood stud walls according to CSA O86-20.
-    
-    This class handles the complete design process including:
-    - Load calculation and accumulation through multiple floors
-    - Load combination generation according to building code
-    - Stud sizing and spacing optimization
-    - Code compliance checks
-    
+    """
+    A calculator for designing and analyzing wood stud walls according to CSA O86-20.
+
+    This class handles the complete design process, including load calculation,
+    load combination generation, and iterative stud sizing to find an optimal
+    solution. It is designed to handle multi-story buildings and accumulates
+    loads from the roof down to the foundation.
+
     Attributes
     ----------
     units : Units
-        The unit system to use (Imperial or Metric)
-    factors : dict
-        Conversion factors for different quantities based on unit system
+        The unit system (Imperial or Metric) used for inputs and outputs.
+    unit_system : UnitSystem
+        The helper class that manages unit conversions.
+    O86 : O86_20
+        An instance of the O86_20 class containing CSA O86-20 code calculations.
+    jp_dict : dict
+        A dictionary of wood material properties, keyed by species name.
+    species_list : list
+        A list of available wood species names.
+    spacings : list
+        A list of allowable stud spacings in millimeters.
+    studs : list
+        A list of pre-initialized Section objects for common lumber sizes.
+    final_results : dict
+        A dictionary storing the final DesignResult object for each floor level.
     """
-    
+
     def __init__(self, units: Units = Units.Imperial):
-        """Initialize the calculator with specified units.
-        
+        """
+        Initializes the StudWallCalculator.
+
+        This sets up the calculator with the specified unit system, loads all
+        necessary data, and initializes default design parameters.
+
         Parameters
         ----------
         units : Units, optional
-            The unit system to use, by default Units.Imperial
+            The unit system to be used for inputs and outputs, by default
+            Units.Imperial.
         """
         self.units = units
         self.unit_system = UnitSystem(units)
-        
-        # Initialize O86 code calculator
+
+        # Initialize O86 code calculation helper
         self.O86 = O86_20
-        
-        # Load wood material properties
+
+        # Load wood material properties from the database.
         self.load_materials()
 
-        # Set allowable spacings
-        self.spacings = [406, 305, 203]  # mm
-        
-        # Create stud objects
+        # Set allowable stud spacings (in millimeters).
+        self.spacings = [406, 305, 203]  # Corresponds to 16", 12", 8"
+
+        # Create a list of stud sections to be used in the design process.
         self.initialize_studs()
-        
-        # Initialize default inputs (in the specified unit system)
+
+        # Initialize default inputs. These will be used if not overridden.
         self.set_inputs(
             wall_roof_trib=2,
             wall_floor_trib=11,
@@ -64,77 +81,88 @@ class StudWallCalculator:
             partitions=20,
             wall_sw=12
         )
-        
+
+        # Initialize dictionary to store final results.
+        self.final_results = {}
+
     def load_materials(self):
-        """Load wood material properties from the CSV database.
-        
-        Reads the joist_and_plank.csv file from the data directory and creates
-        Joist_and_Plank objects for each material specification. Stores the
-        materials in jp_dict keyed by species name.
-        
-        The CSV file should contain columns for all required wood properties
-        as specified in the Joist_and_Plank class.
+        """
+        Load wood material properties from the CSV database.
+
+        Reads the `joist_and_plank.csv` file from the data directory and
+        creates Joist_and_Plank objects for each material specification.
+        The loaded materials are stored in `self.jp_dict` keyed by species name.
+
+        The CSV file must contain columns for all required wood properties
+        as defined in the Joist_and_Plank class.
         """
         data_dir = Path(__file__).parent.parent / 'data'
         csv_path = data_dir / 'joist_and_plank.csv'
-        
+
         self.jp_dict = {}
         self.species_list = []
-        
+
         with open(csv_path, mode='r') as file:
             csvFile = csv.DictReader(file)
             for lines in csvFile:
-                temp = {k: float(v) if v.replace('.','').isdigit() else v 
-                       for k, v in lines.items()}
+                # Convert numeric strings to float, leave others as is.
+                temp = {k: float(v) if v.replace('.', '', 1).isdigit() else v
+                        for k, v in lines.items()}
                 new_jp = Joist_and_Plank(**temp)
                 self.species_list.append(new_jp.name)
                 self.jp_dict[new_jp.name] = new_jp
 
     def initialize_studs(self):
-        """Initialize stud section objects for common lumber sizes.
-        
-        Creates Section objects for 2x4, 2x6, and 2x8 studs using SPF No1/No2
-        grade lumber. Stores the sections in the studs list for use in
-        design iterations.
-        
-        Note: Currently hardcoded for SPF No1/No2, could be made configurable
-        for different species/grades in future versions.
         """
-        self.s_2x4 = Section(38, 89, self.jp_dict['SPF No1/No2'])
-        self.s_2x6 = Section(38, 140, self.jp_dict['SPF No1/No2'])
-        self.s_2x8 = Section(38, 184, self.jp_dict['SPF No1/No2'])
-        self.studs = [self.s_2x4, self.s_2x6, self.s_2x8]
+        Initializes a list of stud Section objects for common lumber sizes.
+
+        This method creates Section objects for common dimensional lumber sizes
+        (2x4, 2x6, 2x8). These sections are pre-configured with 'SPF No1/No2'
+        grade lumber properties, which are loaded previously by `load_materials`.
+
+        The generated list of stud sections is stored in `self.studs` and is
+        used by the `calculate` method to iterate through design options.
+
+        Note
+        ----
+        The material is currently hardcoded to 'SPF No1/No2'. Future versions
+        could make this configurable to allow for different species and grades.
+        """
+        self.studs = [
+            Section(38, 89, self.jp_dict['SPF No1/No2']),
+            Section(38, 140, self.jp_dict['SPF No1/No2']),
+            Section(38, 184, self.jp_dict['SPF No1/No2']),
+        ]
 
     def set_inputs(self, **kwargs):
-        """Set and convert all physical inputs to the internal metric system.
-        
+        """
+        Set and convert all physical inputs to the internal metric system.
+
+        This method takes all user-defined inputs as keyword arguments,
+        converts them from the display unit system (e.g., Imperial) to the
+        internal calculation system (Metric), and stores them as instance
+        attributes.
+
         Parameters
         ----------
         **kwargs
-            Arbitrary keyword arguments. Supported parameters include:
-            - wall_roof_trib : float
-                Roof tributary width (ft or m)
-            - wall_floor_trib : float
-                Floor tributary width (ft or m)
-            - wall_heights : list of float
-                Wall heights per floor (ft or m)
-            - roof_dead : float
-                Roof dead load (psf or kPa)
-            - roof_snow : float
-                Roof snow load (psf or kPa)
-            - floor_dead : float
-                Floor dead load (psf or kPa)
-            - floor_live : float
-                Floor live load (psf or kPa)
-            - partitions : float
-                Partition load (psf or kPa)
-            - wall_sw : float
-                Wall self-weight (psf or kPa)
+            Arbitrary keyword arguments representing the design inputs.
+            Supported parameters include:
+            - `wall_roof_trib` (float): Roof tributary width (ft or m).
+            - `wall_floor_trib` (float): Floor tributary width (ft or m).
+            - `wall_heights` (list[float]): Wall heights per floor (ft or m).
+            - `roof_dead` (float): Roof dead load (psf or kPa).
+            - `roof_snow` (float): Roof snow load (psf or kPa).
+            - `floor_dead` (float): Floor dead load (psf or kPa).
+            - `floor_live` (float): Floor live load (psf or kPa).
+            - `partitions` (float): Partition load (psf or kPa).
+            - `wall_sw` (float): Wall self-weight (psf or kPa).
         """
-        # Store all inputs internally in metric units
+        # All inputs are converted to and stored in metric units for consistency.
         self.wall_roof_trib_m = self.unit_system.to_metric(kwargs.get('wall_roof_trib', 2), 'length_ft_m')
         self.wall_floor_trib_m = self.unit_system.to_metric(kwargs.get('wall_floor_trib', 11), 'length_ft_m')
-        self.wall_heights_mm = [self.unit_system.to_metric(h, 'length_ft_mm') for h in kwargs.get('wall_heights', [10, 10, 10, 10, 12])]
+        self.wall_heights_mm = [self.unit_system.to_metric(h, 'length_ft_mm') for h in
+                                kwargs.get('wall_heights', [10, 10, 10, 10, 12])]
         self.roof_dead_kpa = self.unit_system.to_metric(kwargs.get('roof_dead', 22), 'pressure')
         self.roof_snow_kpa = self.unit_system.to_metric(kwargs.get('roof_snow', 69), 'pressure')
         self.floor_dead_kpa = self.unit_system.to_metric(kwargs.get('floor_dead', 35), 'pressure')
@@ -145,65 +173,61 @@ class StudWallCalculator:
         self.n_floors = len(self.wall_heights_mm)
 
     def calculate_loads(self):
-        """Calculate and accumulate loads for all floors.
-        
-        Calculates dead, live, and snow loads at each floor level based on
-        tributary areas and load values. Accumulates loads from top to bottom
-        of the wall. Handles both roof and floor conditions appropriately.
-        
+        """
+        Calculate and accumulate unfactored loads for all floors.
+
+        Calculates the dead, live, and snow line loads (in kN/m) at each floor
+        level based on the tributary areas and specified load values. It then
+        accumulates these loads from the top floor down to the bottom floor.
+
         Returns
         -------
         pandas.DataFrame
-            DataFrame containing cumulative DL, LL, and SL for each floor.
-            Index is floor number (top to bottom).
-            Columns are 'DL', 'LL', 'SL' in kN/m.
+            A DataFrame containing the cumulative unfactored Dead Load (DL),
+            Live Load (LL), and Snow Load (SL) for each floor. The index
+            represents the floor number (from top to bottom).
         """
         i = 0
         floors = {}
+        # Calculate loads for each individual floor.
         while i < self.n_floors:
-            if i == 0:
-                # (kPa * m) + (kPa * m) = kN/m
-                dl = (self.roof_dead_kpa * self.wall_roof_trib_m + 
+            if i == 0:  # Top floor (roof)
+                # Line load (kN/m) = Area load (kPa) * Tributary width (m)
+                dl = (self.roof_dead_kpa * self.wall_roof_trib_m +
                       self.wall_sw_kpa * (self.wall_heights_mm[i] / 1000))
                 ll = 0
                 sl = (self.roof_snow_kpa * self.wall_roof_trib_m)
-            else:
-                dl = ((self.floor_dead_kpa + self.partitions_kpa) * self.wall_floor_trib_m + 
+            else:  # Typical floor
+                dl = ((self.floor_dead_kpa + self.partitions_kpa) * self.wall_floor_trib_m +
                       self.wall_sw_kpa * (self.wall_heights_mm[i] / 1000))
                 ll = (self.floor_live_kpa * self.wall_floor_trib_m)
                 sl = 0
-            
-            floors[self.n_floors - i] = {
-                'DL': dl,
-                'LL': ll,
-                'SL': sl
-            }
+
+            floors[self.n_floors - i] = {'DL': dl, 'LL': ll, 'SL': sl}
             i += 1
-            
+
+        # Create a DataFrame and calculate the cumulative sum from top to bottom.
         floor_df = pd.DataFrame(floors).transpose()
         self.loads_df = floor_df.cumsum()
         return self.loads_df
 
     def calculate_combinations(self, loads_df):
-        """Calculate load combinations according to building code requirements.
-        
-        Applies load factors and combines loads according to CSA O86-20:
-        - 1.4DL
-        - 1.25DL + 1.5LL + 1.0SL
-        - 1.25DL + 1.5SL + 1.0LL
-        - 1.25DL + 1.5LL
-        - 1.25DL + 1.5SL
-        
+        """
+        Calculate factored load combinations according to building code.
+
+        Applies the standard load factors from CSA O86-20 to the unfactored
+        loads to generate the required factored load combinations.
+
         Parameters
         ----------
         loads_df : pandas.DataFrame
-            DataFrame containing unfactored loads per floor
-            
+            DataFrame containing the unfactored cumulative loads per floor.
+
         Returns
         -------
         pandas.DataFrame
-            DataFrame containing factored load combinations.
-            Index is floor number, columns are combination names.
+            A DataFrame containing the factored load for each combination. The
+            index is the floor number, and columns are the combination names.
         """
         combo_dict = {}
         combo_dict['1.4DL'] = loads_df['DL'] * 1.4
@@ -211,260 +235,224 @@ class StudWallCalculator:
         combo_dict['1.25DL+1.5SL+1.0LL'] = loads_df['DL'] * 1.25 + loads_df['SL'] * 1.5 + loads_df['LL'] * 1.0
         combo_dict['1.25DL+1.5LL'] = loads_df['DL'] * 1.25 + loads_df['LL'] * 1.5
         combo_dict['1.25DL+1.5SL'] = loads_df['DL'] * 1.25 + loads_df['SL'] * 1.5
-        
+
         self.combo_df = pd.DataFrame(combo_dict)
         return self.combo_df
 
-    def size_studs(self, stud, spacing, combo, load, load_dict):
-        """Calculate stud capacity and demand-capacity ratio for given configuration.
-        
-        Determines load duration factors, calculates axial capacity in both
-        directions (width and depth), and computes demand-capacity ratios.
-        
+    def size_studs(self, stud, duration, Pl, Ps):
+        """
+        Calculates the factored axial compressive resistance (Pr) of a single stud.
+
+        This method applies the relevant modification factors (k-factors) based
+        on load duration and determines the compressive resistance of the stud
+        section according to CSA O86-20 Clause 6.5.6. It calculates the
+        resistance for buckling about both the strong and weak axes.
+
         Parameters
         ----------
         stud : Section
-            The stud section to analyze
-        spacing : float
-            Stud spacing in mm
-        combo : str
-            Name of the load combination being checked
-        load : float
-            Factored load from the combination in kN/m
-        load_dict : dict
-            Dictionary containing unfactored DL, LL, SL values
-            
+            The stud Section object to be analyzed.
+        duration : str
+            The load duration category ('Long', 'Standard', 'Short'). This is
+            used to determine the Kd factor.
+        Pl : float
+            The long-term component of the factored axial load (in kN).
+        Ps : float
+            The short-term component of the factored axial load (in kN).
+
         Returns
         -------
-        dict
-            Dictionary containing:
-            - 'Pf': Factored axial load (kN)
-            - 'Pr': Dictionary with axial capacities in both directions
-            - 'DC': Governing demand-capacity ratio
-            - 'k_factors': Dictionary of applicable k-factors
+        tuple[dict, dict]
+            A tuple containing two dictionaries:
+            - The first dictionary holds the calculated factored resistance (Pr)
+              and other intermediate values for buckling about both the 'Width'
+              and 'Depth' axes.
+            - The second dictionary contains the modification factors (k_factors)
+              used in the calculation.
         """
-        # Get long term and short term loads on stud
-        if combo == '1.4DL':
-            duration = 'Long'
-            long = 0
-            short = 0
-        elif combo == '1.25DL+1.5LL+1.0SL':
-            duration = 'Standard'
-            long = load_dict['DL']
-            short = load_dict['LL'] + 0.5 * load_dict['SL']
-        elif combo == '1.25DL+1.5SL+1.0LL':
-            duration = 'Standard'
-            long = load_dict['DL']
-            short = load_dict['SL'] + 0.5 * load_dict['LL']
-        elif combo == '1.25DL+1.5LL':
-            duration = 'Standard'
-            long = load_dict['DL']
-            short = load_dict['LL']
-        elif combo == '1.25DL+1.5SL':
-            duration = 'Standard'
-            long = load_dict['DL']
-            short = load_dict['SL']
-
-        # Get factored axial load on stud
-        Pf = load * spacing / 1000
-        Pl = long * spacing / 1000
-        Ps = short * spacing / 1000
-
-        # Determine k factors
+        # Determine k-factors based on load duration and other conditions.
         k_factors = {
             "Kd": self.O86.CL5_3_2_2(duration, Pl, Ps),
-            "Kh": 1.0,
-            "Kse": 1.0,
-            "Ksc": 1.0,
-            "Kt": 1.0
+            "Kh": 1.0,  # System factor for compression
+            "Kse": 1.0, # Service condition factor for sawn lumber
+            "Ksc": 1.0, # Service condition factor
+            "Kt": 1.0   # Treatment factor
         }
 
-        # Determine axial capacity of stud in each direction
+        # Determine axial capacity of the stud for buckling about each axis.
         Pr = {
             'Width': self.O86.CL6_5_6_2_3(stud, stud.Lu['Width'], **k_factors),
             'Depth': self.O86.CL6_5_6_2_3(stud, stud.Lu['Depth'], **k_factors)
         }
 
-        # Determine the DC ratio in each direction
-        DC = {
-            'Width': Pf / (Pr['Width']['Pr'] / 1000),
-            'Depth': Pf / (Pr['Depth']['Pr'] / 1000)
-        }
-
-        # Determine governing DC ratio
-        DC = max(DC['Width'], DC['Depth'])
-
-        return {
-            'Pf': Pf,
-            'Pr': Pr,
-            'DC': DC,
-            "k_factors": k_factors
-        }
+        return Pr, k_factors
 
     def calculate(self):
-        """Execute the complete stud wall design process.
-        
-        This method performs the following steps:
-        1. Calculates loads for all floors
-        2. Generates load combinations
-        3. For each floor from top to bottom:
-           - Starts with smallest stud size and maximum spacing
-           - Checks all load combinations
-           - If any DC > 1.0:
-             a. Increases number of plys (up to 3)
-             b. If still failing, reduces spacing
-             c. If still failing, increases stud size
-           - Stores results for all valid configurations
-           - Identifies governing load combination
-        
-        The results are stored in instance variables:
-        - loads_df: Unfactored loads
-        - combo_df: Load combinations
-        - results_dict: Results for each load combination
-        - final_results_dict: Final design results
-        - governing_lc: Governing load combination
-        
-        Raises
-        ------
-        RuntimeError
-            If no valid solution can be found for a floor
         """
-        # Calculate loads for all floors
-        self.loads_df = self.calculate_loads()
-        
-        # Calculate load combinations
-        self.combo_df = self.calculate_combinations(self.loads_df)
-        
-        # Set governing DC ratio
-        DC_max = 1.0
-        self.results = []
-        self.results_dict = {}
-        self.final_results_dict = {}
-        
-        with Progress() as progress:
-            # Loop over floors (wall heights)
-            for level in range(self.n_floors, 0, -1):
-                task = progress.add_task(f"[bold red]Processing....{level}", total=100)
-                
-                # Set initial stud size to 2x4
-                stud = self.studs[0]
-                # Set initial stud spacing
-                spacing = self.spacings[0]
-                
-                # Set height to height of current level
-                h = self.wall_heights_mm[self.n_floors - level]
-                
-                # Set unsupported lengths in each direction
-                stud.Lu['Width'] = 0.152  # nail spacing
-                stud.Lu['Depth'] = h  # wall height
-                
-                # Get dictionary of all load combos at current level
-                load_dict = self.loads_df.loc[level].to_dict()
-                load_combo_dict = self.combo_df.loc[level].to_dict()
-                
-                i = 0  # spacing iterator
-                k = 0  # stud section iterator
-                
-                # Loop through all load combinations at current level
-                for combo, load in load_combo_dict.items():
-                    self.results_dict[combo] = self.size_studs(stud, spacing, combo, load, load_dict)
-                    DC = self.results_dict[combo]['DC']
-                    
-                    while DC >= DC_max:
-                        stud.Plys += 1  # increase plys
-                        self.results_dict[combo] = self.size_studs(stud, spacing, combo, load, load_dict)
-                        
-                        if stud.Plys > 3:  # if max number of plys is reached (3)
-                            stud.Plys = 1  # reset plys
-                            i += 1
-                            if i < len(self.spacings):
-                                spacing = self.spacings[i]
-                            
-                        if i >= len(self.spacings):  # if min spacing is reached
-                            i = 0  # reset spacing
-                            k += 1  # increase stud size
-                            if k < len(self.studs):
-                                stud = self.studs[k]
-                            
-                        if k >= len(self.studs):  # nothing works
-                            print("[bold red]No valid solution found![/bold red]")
-                            break
-                            
-                        self.results_dict[combo] = self.size_studs(stud, spacing, combo, load, load_dict)
-                        DC = self.results_dict[combo]['DC']
-                    
-                    self.results_dict[combo]['spacing'] = spacing
-                    self.results_dict[combo]['stud'] = stud
-                
-                # Store final results for this level
-                for combo, load in load_combo_dict.items():
-                    self.final_results_dict[combo] = self.size_studs(stud, spacing, combo, load, load_dict)
-                    self.final_results_dict[combo]['spacing'] = spacing
-                    self.final_results_dict[combo]['stud'] = stud
-                
-                # Find governing load combination
-                dc_list = []
-                for combo in self.final_results_dict:
-                    result = self.final_results_dict[combo]
-                    dc_list.append(result['DC'])
-                    governing_dc = max(dc_list)
-                    if result['DC'] == governing_dc:
-                        self.governing_lc = combo
-                
-                while not progress.finished:
-                    progress.update(task, advance=20)
-                    time.sleep(0.2)
+        Performs the main stud wall design calculation and prints the results.
 
-    def print_results(self):
-        """Print calculation results in a formatted manner.
-        
-        Displays:
-        1. Summary of unfactored loads per floor
-        2. Summary of load combinations per floor
-        3. For each floor:
-           - Results for each load combination
-           - Stud configuration and DC ratios
-           - Governing load combination and its results
-        
-        Uses rich library for formatted console output with colors
-        and formatting for better readability.
-        
-        Note: This method should only be called after calculate()
-        has been run successfully.
+        This method orchestrates the entire design process. It first calculates
+        the loads and load combinations, then iterates through each floor level
+        to find the optimal stud design. The progress of the calculations and
+        the results for each level are printed to the console as they are
+        determined.
+
+        The process for each level is as follows:
+        1.  A progress bar is displayed for the current level's calculations.
+        2.  The method exhaustively iterates through every stud, spacing, and ply
+            combination.
+        3.  For each combination, it checks against every load case. A design is
+            only considered valid if its DC ratio is less than 1.0 for ALL load
+            combinations.
+        4.  Every valid design solution is stored in a list for that level.
+        5.  After all combinations are checked, a list of all valid solutions is
+            printed.
+        6.  The solution with the lowest wood volume is selected from the list and
+            printed as the final, optimal design for that level.
+
+        The final optimal results are also stored in the `self.final_results`
+        dictionary for programmatic access.
         """
+        # Calculate and print unfactored loads and factored load combinations.
+        self.loads_df = self.calculate_loads()
         print("\n[bold blue]Unfactored Total Loads per floor[/bold blue]")
         pprint(self.loads_df)
-        
+
+        self.combo_df = self.calculate_combinations(self.loads_df)
         print("\n[bold blue]Factored Loads Combos per floor[/bold blue]")
         pprint(self.combo_df)
-        
+
+        # Initialize a dictionary to store the final DesignResult for each level.
+        self.final_results = {}
+
+        # Iterate backwards through each floor level, from top to bottom.
         for level in range(self.n_floors, 0, -1):
-            # This part of the result printing is simplified for clarity.
-            # In a real application, you would iterate through the stored results
-            # for each level.
+            # Get the height and load data for the current level.
+            h = self.wall_heights_mm[self.n_floors - level]
+            load_dict = self.loads_df.loc[level].to_dict()
+            load_combo_dict = self.combo_df.loc[level].to_dict()
+
+            valid_solutions_for_level = []
+            num_combinations = len(self.studs) * len(self.spacings) * 3
+
+            # Use a progress bar for the calculation of each level.
+            with Progress() as progress:
+                task = progress.add_task(f"[bold red]Processing Level {level}...[/bold red]", total=num_combinations)
+
+                # Iterate through all design combinations.
+                for stud_template in self.studs:
+                    for spacing in self.spacings:
+                        for plys in range(1, 4):
+                            progress.update(task, advance=1)
+                            stud = Section(stud_template.Width, stud_template.Depth, stud_template.Material, plys)
+                            stud.Lu['Width'] = 152
+                            stud.Lu['Depth'] = h
+
+                            governing_result_for_design = DesignResult(level=level, stud=stud, spacing=spacing, plys=plys)
+                            all_combos_pass = True
+
+                            for combo, load in load_combo_dict.items():
+                                if combo == '1.4DL':
+                                    duration, long, short = 'Long', 0, 0
+                                elif combo == '1.25DL+1.5LL+1.0SL':
+                                    duration = 'Standard'
+                                    long = load_dict['DL']
+                                    short = load_dict['LL'] + 0.5 * load_dict['SL']
+                                elif combo == '1.25DL+1.5SL+1.0LL':
+                                    duration = 'Standard'
+                                    long = load_dict['DL']
+                                    short = load_dict['SL'] + 0.5 * load_dict['LL']
+                                elif combo == '1.25DL+1.5LL':
+                                    duration = 'Standard'
+                                    long = load_dict['DL']
+                                    short = load_dict['LL']
+                                elif combo == '1.25DL+1.5SL':
+                                    duration = 'Standard'
+                                    long = load_dict['DL']
+                                    short = load_dict['SL']
+
+                                Pf = load * spacing / 1000
+                                Pl = long * spacing / 1000
+                                Ps = short * spacing / 1000
+
+                                Pr_calcs, k_factors = self.size_studs(stud, duration, Pl, Ps)
+                                Pr = min(Pr_calcs['Width']['Pr'], Pr_calcs['Depth']['Pr']) / 1000
+                                DC = Pf / Pr if Pr > 0 else float('inf')
+
+                                if DC >= 1.0:
+                                    all_combos_pass = False
+                                    break
+                                
+                                if DC > governing_result_for_design.dc_ratio:
+                                    governing_result_for_design.dc_ratio = DC
+                                    governing_result_for_design.governing_combo = combo
+                                    governing_result_for_design.Pf = Pf
+                                    governing_result_for_design.Pr = Pr
+                                    governing_result_for_design.k_factors = k_factors
+
+                            if all_combos_pass:
+                                governing_result_for_design.wood_volume = stud.Area / spacing
+                                valid_solutions_for_level.append(governing_result_for_design)
+
+            # --- Print results for the current level ---
             print("---------------------------------------------------------")
-            print(f"[bold red]Final Design for Level {level}[/bold red]")
-            print(f"[bold green]Governing Combo: {self.governing_lc}[/bold green]")
+            print(f"[bold cyan]All Valid Solutions for Level {level}[/bold cyan]")
+
+            if not valid_solutions_for_level:
+                print("[bold yellow]No adequate design found.[/bold yellow]")
+                self.final_results[level] = DesignResult(level=level, stud=None)
+            else:
+                # Sort solutions by wood volume to ensure the first is the most economical.
+                valid_solutions_for_level.sort(key=lambda x: x.wood_volume)
+                
+                for i, result in enumerate(valid_solutions_for_level):
+                    self._print_design_result(result, is_summary=True)
+                    if i < len(valid_solutions_for_level) - 1:
+                        print("---") # Separator
+
+                # Select the optimal solution and print it.
+                optimal_solution = valid_solutions_for_level[0]
+                self.final_results[level] = optimal_solution
+
+                print("\n---------------------------------------------------------")
+                print(f"[bold red]Final (Optimal) Design for Level {level}[/bold red]")
+                self._print_design_result(optimal_solution, is_final=True)
             
-            result = self.final_results_dict[self.governing_lc]
-            
-            # Convert results back to display units
-            display_pf = self.unit_system.from_metric(result['Pf'], 'load')
-            pr_val = min(result['Pr']['Width']['Pr'], result['Pr']['Depth']['Pr']) / 1000
-            display_pr = self.unit_system.from_metric(pr_val, 'load')
-            
-            # Get display units
-            display_spacing = self.unit_system.from_metric(
-                result['spacing'], 'length_in_mm'
-            )
-            spacing_unit = self.unit_system.get_display_unit('length_in_mm')
+            print("---------------------------------------------------------\n")
+
+    def _print_design_result(self, result: DesignResult, is_final: bool = False, is_summary: bool = False):
+        """
+        Helper method to print a single design result in a formatted way.
+
+        Parameters
+        ----------
+        result : DesignResult
+            The result object to print.
+        is_final : bool, optional
+            If True, prints the full detailed output for a final design.
+        is_summary : bool, optional
+            If True, prints a condensed summary.
+        """
+        if result.stud is None:
+            return
+
+        if is_final:
+            print(f"[bold green]Governing Combo: {result.governing_combo}[/bold green]")
+
+        display_spacing = self.unit_system.from_metric(result.spacing, 'length_in_mm')
+        spacing_unit = self.unit_system.get_display_unit('length_in_mm')
+
+        print(
+            f"({result.plys})-{result.stud.Name} "
+            f"{result.stud.Material.name} @ {display_spacing:.0f} {spacing_unit} o/c"
+        )
+
+        if is_final:
+            display_pf = self.unit_system.from_metric(result.Pf, 'load')
+            display_pr = self.unit_system.from_metric(result.Pr, 'load')
             load_unit = self.unit_system.get_display_unit('load')
-            
-            print(
-                f"({result['stud'].Plys})-{result['stud'].Name} "
-                f"{result['stud'].Material.name} @ {display_spacing:.0f} {spacing_unit} o/c"
-            )
             print(f"Factored Load (Pf) = {display_pf:.2f} {load_unit}")
             print(f"Factored Resistance (Pr) = {display_pr:.2f} {load_unit}")
-            print(f"DC Ratio = {result['DC']:.2f}")
-            print("---------------------------------------------------------\n")
+
+        print(f"DC Ratio = {result.dc_ratio:.2f}")
+        print(f"Wood Volume Proxy = {result.wood_volume:.2f} mm")

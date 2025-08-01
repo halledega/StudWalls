@@ -1,13 +1,13 @@
 from .joist_and_plank import Joist_and_Plank
 
 class Section():
-    def __init__(self, Width: float, Depth: float, Material: Joist_and_Plank):
+    def __init__(self, Width: float, Depth: float, Material: Joist_and_Plank, plys: int = 1):
         self._width = Width
         self._depth = Depth
         self._material = Material
         self._lu = {'Width': 0, 'Depth': 0}
         self._area = 0
-        self._plys = 1
+        self._plys = plys
 
     @property
     def Plys(self):
@@ -49,3 +49,6 @@ class Section():
     @property
     def Name(self):
         return f"{self._width}x{self._depth}"
+
+    def __repr__(self):
+        return f"Stud is: {self._width}x{self._depth}, Lu = {self._lu}"

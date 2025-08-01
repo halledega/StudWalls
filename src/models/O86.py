@@ -57,7 +57,8 @@ class O86_20:
         Cc = O86_20.CL6_5_6_2_2(Lu, section.Depth)
         
         Fc = section.Material.fc*(Kd * Kh * Ksc * Kt)
-                                  
+
+        # print(f"d = {section.Depth}, Lu = {Lu}")
         Kzc = min(6.3*(section.Depth * Lu)**-0.13,1.3)
         
         Kc = (1.0 + (Fc * Kzc * Cc**3)/(35 * section.Material.E05 * Kse * Kt))**-1
