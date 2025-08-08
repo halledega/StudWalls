@@ -1,54 +1,86 @@
+"""
+This module defines the Section class, which represents a structural member's cross-section.
+"""
 from .joist_and_plank import Joist_and_Plank
 
-class Section():
-    def __init__(self, Width: float, Depth: float, Material: Joist_and_Plank, plys: int = 1):
-        self._width = Width
-        self._depth = Depth
-        self._material = Material
-        self._lu = {'Width': 0, 'Depth': 0}
-        self._area = 0
+class Section:
+    """
+    Represents a structural cross-section.
+
+    This class holds the dimensional and material properties of a structural
+    member, such as a stud.
+
+    Parameters
+    ----------
+    width : float
+        The width of the cross-section in millimeters.
+    depth : float
+        The depth of the cross-section in millimeters.
+    material : Joist_and_Plank
+        The material object associated with this section.
+    plys : int, optional
+        The number of plys for this section, by default 1.
+    """
+
+    def __init__(self, width: float, depth: float, material: Joist_and_Plank, plys: int = 1):
+        self._width = width
+        self._depth = depth
+        self._material = material
+        self._lu = {'width': 0, 'depth': 0}
         self._plys = plys
 
     @property
-    def Plys(self):
+    def plys(self) -> int:
+        """The number of plys for the section."""
         return self._plys
-    @Plys.setter
-    def Plys(self, val):
-        self._plys = val
+
+    @plys.setter
+    def plys(self, value: int) -> None:
+        self._plys = value
 
     @property
-    def Width(self):
+    def width(self) -> float:
+        """The width of the cross-section in millimeters."""
         return self._width
-    @Width.setter
-    def Width(self, val):
-        self._width = val
-        
+
+    @width.setter
+    def width(self, value: float) -> None:
+        self._width = value
+
     @property
-    def Depth(self):
+    def depth(self) -> float:
+        """The depth of the cross-section in millimeters."""
         return self._depth
-    @Depth.setter
-    def Depth(self, val):
-        self._depth = val
-        
+
+    @depth.setter
+    def depth(self, value: float) -> None:
+        self._depth = value
+
     @property
-    def Lu(self):
+    def lu(self) -> dict[str, float]:
+        """The unbraced lengths ('width' and 'depth') in millimeters."""
         return self._lu
-    @Lu.setter
-    def Lu(self, val):
-        self._lu['width'] = val['Width']
-        self._lu['Depth'] = val['Depth']
-        
+
+    @lu.setter
+    def lu(self, value: dict[str, float]) -> None:
+        self._lu['width'] = value.get('width', 0)
+        self._lu['depth'] = value.get('depth', 0)
+
     @property
-    def Area(self):
-        return self._width * self._depth
-    
+    def area(self) -> float:
+        """The cross-sectional area in square millimeters."""
+        return self._width * self._depth * self._plys
+
     @property
-    def Material(self):
+    def material(self) -> Joist_and_Plank:
+        """The material object for this section."""
         return self._material
-    
+
     @property
-    def Name(self):
+    def name(self) -> str:
+        """A string representation of the section's dimensions (e.g., '38x89')."""
         return f"{self._width}x{self._depth}"
 
-    def __repr__(self):
-        return f"Stud is: {self._width}x{self._depth}, Lu = {self._lu}"
+    def __repr__(self) -> str:
+        """A developer-friendly representation of the Section object."""
+        return f"Section({self.width}x{self.depth}, plys={self.plys}, lu={self.lu})"

@@ -1,3 +1,7 @@
+"""
+This module defines the main StudWallCalculator class for performing
+stud wall design calculations.
+"""
 import csv
 from pathlib import Path
 
@@ -6,7 +10,8 @@ from rich import print
 from rich.pretty import pprint
 from rich.progress import Progress
 
-from ..models import Section, Joist_and_Plank
+from ..models.section import Section
+from ..models.joist_and_plank import Joist_and_Plank
 from ..models.O86 import O86_20
 from ..core.units import Units, UnitSystem
 from ..core.results import DesignResult
@@ -263,29 +268,27 @@ class StudWallCalculator:
         Returns
         -------
         tuple[dict, dict]
-            A tuple containing two dictionaries:
-            - The first dictionary holds the calculated factored resistance (Pr)
-              and other intermediate values for buckling about both the 'Width'
-              and 'Depth' axes.
-            - The second dictionary contains the modification factors (k_factors)
-              used in the calculation.
+            A tuple containing:
+            - A dictionary with the factored resistance (Pr) and intermediate
+              values for buckling about the 'width' and 'depth' axes.
+            - A dictionary containing the modification factors (k_factors) used.
         """
         # Determine k-factors based on load duration and other conditions.
         k_factors = {
             "Kd": self.O86.CL5_3_2_2(duration, Pl, Ps),
             "Kh": 1.0,  # System factor for compression
-            "Kse": 1.0, # Service condition factor for sawn lumber
-            "Ksc": 1.0, # Service condition factor
-            "Kt": 1.0   # Treatment factor
+            "Kse": 1.0,  # Service condition factor for sawn lumber
+            "Ksc": 1.0,  # Service condition factor
+            "Kt": 1.0,  # Treatment factor
         }
 
         # Determine axial capacity of the stud for buckling about each axis.
-        Pr = {
-            'Width': self.O86.CL6_5_6_2_3(stud, stud.Lu['Width'], **k_factors),
-            'Depth': self.O86.CL6_5_6_2_3(stud, stud.Lu['Depth'], **k_factors)
+        pr_calcs = {
+            'width': self.O86.CL6_5_6_2_3(stud, stud.lu['width'], **k_factors),
+            'depth': self.O86.CL6_5_6_2_3(stud, stud.lu['depth'], **k_factors),
         }
 
-        return Pr, k_factors
+        return pr_calcs, k_factors
 
     def calculate(self):
         """
@@ -344,9 +347,9 @@ class StudWallCalculator:
                     for spacing in self.spacings:
                         for plys in range(1, 4):
                             progress.update(task, advance=1)
-                            stud = Section(stud_template.Width, stud_template.Depth, stud_template.Material, plys)
-                            stud.Lu['Width'] = 152
-                            stud.Lu['Depth'] = h
+                            stud = Section(stud_template.width, stud_template.depth, stud_template.material, plys)
+                            stud.lu['width'] = 152
+                            stud.lu['depth'] = h
 
                             governing_result_for_design = DesignResult(level=level, stud=stud, spacing=spacing, plys=plys)
                             all_combos_pass = True
@@ -375,8 +378,8 @@ class StudWallCalculator:
                                 Pl = long * spacing / 1000
                                 Ps = short * spacing / 1000
 
-                                Pr_calcs, k_factors = self.size_studs(stud, duration, Pl, Ps)
-                                Pr = min(Pr_calcs['Width']['Pr'], Pr_calcs['Depth']['Pr']) / 1000
+                                pr_calcs, k_factors = self.size_studs(stud, duration, Pl, Ps)
+                                Pr = min(pr_calcs['width']['Pr'], pr_calcs['depth']['Pr']) / 1000
                                 DC = Pf / Pr if Pr > 0 else float('inf')
 
                                 if DC >= 1.0:
@@ -391,7 +394,7 @@ class StudWallCalculator:
                                     governing_result_for_design.k_factors = k_factors
 
                             if all_combos_pass:
-                                governing_result_for_design.wood_volume = stud.Area / spacing
+                                governing_result_for_design.wood_volume = stud.area / spacing
                                 valid_solutions_for_level.append(governing_result_for_design)
 
             # --- Print results for the current level ---
@@ -408,7 +411,7 @@ class StudWallCalculator:
                 for i, result in enumerate(valid_solutions_for_level):
                     self._print_design_result(result, is_summary=True)
                     if i < len(valid_solutions_for_level) - 1:
-                        print("---") # Separator
+                        print("---")
 
                 # Select the optimal solution and print it.
                 optimal_solution = valid_solutions_for_level[0]
@@ -443,8 +446,8 @@ class StudWallCalculator:
         spacing_unit = self.unit_system.get_display_unit('length_in_mm')
 
         print(
-            f"({result.plys})-{result.stud.Name} "
-            f"{result.stud.Material.name} @ {display_spacing:.0f} {spacing_unit} o/c"
+            f"({result.plys})-{result.stud.name} "
+            f"{result.stud.material.name} @ {display_spacing:.0f} {spacing_unit} o/c"
         )
 
         if is_final:
