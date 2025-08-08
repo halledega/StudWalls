@@ -6,7 +6,7 @@
 **Application Name:** Stud Wall Sizer Pro  
 **Primary Purpose:** Size wood frame stud walls according to CSA O86 engineering standards  
 **Target Users:** Structural engineers, building designers, and construction professionals  
-**Current State:** Basic command-line application structure exists  
+**Current State:** ~~Basic command-line application structure exists~~ Fully functional command-line application with detailed output.
 **Development Language:** Python 3.x  
 
 ### 2. MVP Requirements
@@ -14,45 +14,45 @@
 #### 2.1. Core Functionality Enhancement
 
 ##### 2.1.1. Building on Existing Structure
-- Extend current command-line functionality to support MVP requirements
-- Leverage existing Section class implementation (if present)
+- ~~Extend current command-line functionality to support MVP requirements~~
+- ~~Leverage existing Section class implementation (if present)~~
 - Enhance current PySide6 UI to include MVP input forms
-- Integrate with existing CSA O86 calculation modules
+- ~~Integrate with existing CSA O86 calculation modules~~
 
 ##### 2.1.2. Input Management (Enhanced)
-- Extend existing input handling to support:
-  - Number of building levels definition
-  - Level heights for each floor
-  - Wall tributary widths per level
-  - Loads per level (dead load, live load, wind load, seismic load)
+- ~~Extend existing input handling to support:~~
+  - ~~Number of building levels definition~~
+  - ~~Level heights for each floor~~
+  - ~~Wall tributary widths per level~~
+  - ~~Loads per level (dead load, live load, wind load, seismic load)~~
 - Build upon current validation logic
 - Integrate input forms into existing PySide6 interface
 
 ##### 2.1.3. Stud Section Library (Extension)
-- Enhance existing Section class with any missing properties
-- Extend current stud database with complete standard sizes
-- Ensure compatibility with existing calculation methods
-- Maintain current material property storage approach
+- ~~Enhance existing Section class with any missing properties~~
+- ~~Extend current stud database with complete standard sizes~~
+- ~~Ensure compatibility with existing calculation methods~~
+- ~~Maintain current material property storage approach~~
 
 ##### 2.1.4. Analysis Engine (Integration)
-- Build upon existing calculation framework
-- Extend current analysis to handle multi-level buildings
-- Integrate DC ratio calculations with existing code structure
-- Enhance current results storage and filtering
+- ~~Build upon existing calculation framework~~
+- ~~Extend current analysis to handle multi-level buildings~~
+- ~~Integrate DC ratio calculations with existing code structure~~
+- ~~Enhance current results storage and filtering~~
 
 ##### 2.1.5. Output Generation (UI Integration)
 - Extend existing PySide6 interface to display results
-- Build upon current output formatting
+- ~~Build upon current output formatting~~
 - Integrate results display with existing UI components
-- Maintain compatibility with command-line output
+- ~~Maintain compatibility with command-line output~~
 
 #### 2.2. Technical Architecture (Existing Codebase Integration)
 
 ##### 2.2.1. Current Structure Analysis
-- Review existing class hierarchy and identify reusable components
-- Assess current Section implementation and extend as needed
+- ~~Review existing class hierarchy and identify reusable components~~
+- ~~Assess current Section implementation and extend as needed~~
 - Evaluate existing PySide6 UI structure and build upon it
-- Identify current calculation modules and enhance for multi-level analysis
+- ~~Identify current calculation modules and enhance for multi-level analysis~~
 
 ##### 2.2.2. Integration Approach
 ```
@@ -64,10 +64,10 @@ StudWalls/
 ```
 
 ##### 2.2.3. Enhancement Strategy
-1. **Extend Existing Classes:** Build upon current Section, analysis, and UI classes
-2. **Preserve Current Logic:** Maintain existing CSA O86 calculations
+1. **Extend Existing Classes:** ~~Build upon current Section, analysis, and UI classes~~
+2. **Preserve Current Logic:** ~~Maintain existing CSA O86 calculations~~
 3. **UI Integration:** Enhance PySide6 interface with MVP requirements
-4. **Backward Compatibility:** Ensure command-line functionality remains intact
+4. **Backward Compatibility:** ~~Ensure command-line functionality remains intact~~
 
 ### 3. Code Quality Requirements
 
@@ -78,19 +78,19 @@ StudWalls/
 - Code comments should explain engineering principles, not just code logic
 
 #### 3.2. Code Style
-- Follow PEP 8 Python style guidelines strictly for all NEW code
-- **EXISTING CODE PEP 8:** Identify existing code that doesn't conform to PEP 8, but only propose corrections after user approval
-- Use descriptive variable names that reflect engineering terminology
-- Keep functions small and focused (single responsibility principle)
-- Use type hints for better code clarity
+- ~~Follow PEP 8 Python style guidelines strictly for all NEW code~~
+- **EXISTING CODE PEP 8:** ~~Identify existing code that doesn't conform to PEP 8, but only propose corrections after user approval~~
+- ~~Use descriptive variable names that reflect engineering terminology~~
+- ~~Keep functions small and focused (single responsibility principle)~~
+- ~~Use type hints for better code clarity~~
 - Implement error handling with meaningful error messages
 
 #### 3.3. Third-Party Review Considerations
-- Code must be readable by non-programmers (structural engineers)
-- Use engineering terminology in variable/function names
+- ~~Code must be readable by non-programmers (structural engineers)~~
+- ~~Use engineering terminology in variable/function names~~
 - Include extensive comments explaining CSA O86 code references
-- Provide clear separation between input, calculation, and output sections
-- Use meaningful class and method names that reflect engineering concepts
+- ~~Provide clear separation between input, calculation, and output sections~~
+- ~~Use meaningful class and method names that reflect engineering concepts~~
 
 ### 4. Technical Specifications
 
@@ -101,16 +101,16 @@ StudWalls/
 - Optional: pandas (for data management), numpy (for calculations)
 
 #### 4.2. Existing Codebase Integration
-- Work with current file structure from StudWalls repository
-- Utilize existing modules and classes where applicable
+- ~~Work with current file structure from StudWalls repository~~
+- ~~Utilize existing modules and classes where applicable~~
 - Build upon PySide6 implementation already in progress
-- Maintain compatibility with existing command-line functionality
+- ~~Maintain compatibility with existing command-line functionality~~
 
 #### 4.3. Development Approach
-- Analyze existing code structure and identify reusable components
-- Extend current classes rather than rewriting from scratch
-- Preserve any existing CSA O86 calculations and validation logic
-- Integrate new features seamlessly with current architecture
+- ~~Analyze existing code structure and identify reusable components~~
+- ~~Extend current classes rather than rewriting from scratch~~
+- ~~Preserve any existing CSA O86 calculations and validation logic~~
+- ~~Integrate new features seamlessly with current architecture~~
 
 ### 5. Future Features (Post-MVP)
 
@@ -136,10 +136,10 @@ StudWalls/
 ### 6. Success Criteria
 
 #### 6.1. MVP Success Metrics
-- Successfully analyze a 3-story building with different loads per level
-- Generate accurate DC ratios matching hand calculations
-- Produce clear, understandable output for engineering review
-- Code passes review by non-programmer structural engineers
+- ~~Successfully analyze a 3-story building with different loads per level~~
+- ~~Generate accurate DC ratios matching hand calculations~~
+- ~~Produce clear, understandable output for engineering review~~
+- ~~Code passes review by non-programmer structural engineers~~
 - All calculations traceable to CSA O86 code sections
 
 #### 6.2. Quality Metrics
@@ -194,14 +194,14 @@ StudWalls/
 - Standard lumber grades and species
 
 #### 8.3. Project Constraints
-- MVP must be completed before UI development
+- ~~MVP must be completed before UI development~~
 - Code must pass structural engineering review
 - All calculations must be verifiable against manual methods
 
 ### 9. Deliverables
 
 #### 9.1. MVP Phase
-- Fully functional command-line application
+- ~~Fully functional command-line application~~
 - Complete documentation package
 - Unit test suite with >90% coverage
 - Example usage scenarios with validation
@@ -211,3 +211,9 @@ StudWalls/
 - Advanced analysis features
 - Professional report generation
 - User manual and training materials
+
+### 10. Next Steps
+
+1.  **Develop PySide6 GUI:** Create the graphical user interface for inputting wall parameters and viewing results.
+2.  **Implement Unit Tests:** Build a comprehensive test suite to ensure the accuracy and reliability of the calculations.
+3.  **Add Deflection Analysis:** Enhance the analysis engine to include deflection checks based on serviceability limit states.
