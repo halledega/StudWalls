@@ -140,8 +140,8 @@ class O86_20:
             Pr = phi * Fc * design_area * Kc * Kzc
 
         return {'Pr': Pr, "Fc": Fc, "Kzc": Kzc, "Kc": Kc, 'Cc': Cc}
-    
-# methods below are for spaced compression members
+
+    # methods below are for spaced compression members
     @staticmethod
     def CLA6_5_6_3_7(Cc: float, section: Section, **kwargs) -> tuple[float, float]:
         """Calculates Kc for spaced compression members."""
@@ -165,14 +165,20 @@ class O86_20:
         else:
             E05 = section.material.E05
 
-        Ck = sqrt((0.76 * E05 * Kse * Ke * Kt) / Fc)
+        if Fc == 0:
+            Ck = float('inf')
+        else:
+            Ck = sqrt((0.76 * E05 * Kse * Ke * Kt) / Fc)
 
         if Cc <= 10:
             Kc = 1.0
         elif 10 < Cc <= Ck:
             Kc = 1 - (1 / 3) * (Cc / Ck) ** 4
         elif Ck < Cc < 80:
-            Kc = (E05 * Kse * Ke * Kt) / (k * (Cc ** 2) * Fc)
+            if Fc == 0 or k == 0:
+                Kc = 0.0
+            else:
+                Kc = (E05 * Kse * Ke * Kt) / (k * (Cc ** 2) * Fc)
         else:
             Kc = 0.0
 
@@ -187,9 +193,12 @@ class O86_20:
         l = kwargs['l']
 
         Fc = section.material.fc * (Kd * Ksc * Kt)
-        Cc = l / section.depth
+        if section.depth == 0:
+            Cc = 0.0
+        else:
+            Cc = l / section.depth
 
-        Kzc = min(6.3 * (section.depth * l) ** -0.13, 1.3)
+        Kzc = min(6.3 * (section.depth * l) ** -0.13, 1.3) if section.depth * l > 0 else 1.3
 
         phi, Kc = O86_20.CLA6_5_6_3_7(Cc, section, Fc=Fc, Kse=1.0, Ke=1.0, Kt=1.0)
 

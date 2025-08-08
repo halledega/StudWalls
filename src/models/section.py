@@ -41,7 +41,7 @@ class Section:
     @property
     def width(self) -> float:
         """The width of the cross-section in millimeters."""
-        return self._width
+        return self._width * self._plys
 
     @width.setter
     def width(self, value: float) -> None:
@@ -69,7 +69,7 @@ class Section:
     @property
     def area(self) -> float:
         """The cross-sectional area in square millimeters."""
-        return self._width * self._depth * self._plys
+        return self.width * self.depth
 
     @property
     def material(self) -> Joist_and_Plank:
