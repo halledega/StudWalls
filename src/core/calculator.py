@@ -343,7 +343,7 @@ class StudWallCalculator:
             load_dict = self.loads_df.loc[level].to_dict()
             load_combo_dict = self.combo_df.loc[level].to_dict()
 
-            valid_solutions_for_level = []
+            all_solutions_for_level = []
             num_combinations = len(self.studs) * len(self.spacings) * 3
 
             # Use a progress bar for the calculation of each level.
@@ -360,8 +360,10 @@ class StudWallCalculator:
                             stud.lu['depth'] = h
 
                             governing_result_for_design = DesignResult(level=level, stud=stud, spacing=spacing, plys=plys)
-                            all_combos_pass = True
-
+                            
+                            max_dc_ratio = 0
+                            governing_combo = None
+                            
                             for combo, load in load_combo_dict.items():
                                 if combo == '1.4DL':
                                     duration, long, short = 'Long', 0, 0
@@ -390,80 +392,76 @@ class StudWallCalculator:
                                 Pr = min(pr_calcs['width']['Pr'], pr_calcs['depth']['Pr']) / 1000
                                 DC = Pf / Pr if Pr > 0 else float('inf')
 
-                                if DC >= 1.0:
-                                    all_combos_pass = False
-                                    break
-                                
-                                if DC > governing_result_for_design.dc_ratio:
-                                    governing_result_for_design.dc_ratio = DC
-                                    governing_result_for_design.governing_combo = combo
+                                if DC > max_dc_ratio:
+                                    max_dc_ratio = DC
+                                    governing_combo = combo
                                     governing_result_for_design.Pf = Pf
                                     governing_result_for_design.Pr = Pr
                                     governing_result_for_design.k_factors = k_factors
 
-                            if all_combos_pass:
-                                governing_result_for_design.wood_volume = stud.area / spacing
-                                valid_solutions_for_level.append(governing_result_for_design)
+                            governing_result_for_design.dc_ratio = max_dc_ratio
+                            governing_result_for_design.governing_combo = governing_combo
+                            governing_result_for_design.wood_volume = stud.area / spacing
+                            all_solutions_for_level.append(governing_result_for_design)
 
             # --- Print results for the current level ---
             print("---------------------------------------------------------")
-            print(f"[bold cyan]All Valid Solutions for Level {level}[/bold cyan]")
+            print(f"[bold cyan]All Design Options for Level {level}[/bold cyan]")
 
-            if not valid_solutions_for_level:
-                print("[bold yellow]No adequate design found.[/bold yellow]")
+            all_solutions_for_level.sort(key=lambda x: (x.stud.depth, x.plys, x.spacing))
+
+            summary_list = []
+            for result in all_solutions_for_level:
+                display_spacing = self.unit_system.from_metric(result.spacing, 'length_in_mm')
+                spacing_unit = self.unit_system.get_display_unit('length_in_mm')
+                status = "Pass" if result.dc_ratio < 1.0 else "Fail"
+                summary_list.append({
+                    "Stud": f"({result.plys})-{result.stud.name}",
+                    "Spacing": f"{display_spacing:.0f} {spacing_unit} o/c",
+                    "Wood Volume": f"{result.wood_volume:.2f}",
+                    "DC Ratio": f"{result.dc_ratio:.2f}",
+                    "Status": status
+                })
+            summary_df = pd.DataFrame(summary_list)
+            pprint(summary_df)
+
+            valid_solutions = [s for s in all_solutions_for_level if s.dc_ratio < 1.0]
+
+            if not valid_solutions:
+                print("\n[bold yellow]No adequate design found.[/bold yellow]")
                 self.final_results[level] = DesignResult(level=level, stud=None)
             else:
-                # Sort solutions by wood volume to ensure the first is the most economical.
-                valid_solutions_for_level.sort(key=lambda x: x.wood_volume)
-                
-                for i, result in enumerate(valid_solutions_for_level):
-                    self._print_design_result(result, is_summary=True)
-                    if i < len(valid_solutions_for_level) - 1:
-                        print("---")
-
-                # Select the optimal solution and print it.
-                optimal_solution = valid_solutions_for_level[0]
+                # Select the optimal solution (lowest wood volume) and create a detailed DataFrame.
+                optimal_solution = sorted(valid_solutions, key=lambda x: x.wood_volume)[0]
                 self.final_results[level] = optimal_solution
+
+                display_spacing = self.unit_system.from_metric(optimal_solution.spacing, 'length_in_mm')
+                spacing_unit = self.unit_system.get_display_unit('length_in_mm')
+                display_pf = self.unit_system.from_metric(optimal_solution.Pf, 'load')
+                display_pr = self.unit_system.from_metric(optimal_solution.Pr, 'load')
+                load_unit = self.unit_system.get_display_unit('load')
+
+                final_data = {
+                    "Parameter": [
+                        "Stud", "Material", "Spacing", "Governing Combo",
+                        "Factored Load (Pf)", "Factored Resistance (Pr)",
+                        "DC Ratio", "Wood Volume Proxy"
+                    ],
+                    "Value": [
+                        f"({optimal_solution.plys})-{optimal_solution.stud.name}",
+                        optimal_solution.stud.material.name,
+                        f"{display_spacing:.0f} {spacing_unit} o/c",
+                        optimal_solution.governing_combo,
+                        f"{display_pf:.2f} {load_unit}",
+                        f"{display_pr:.2f} {load_unit}",
+                        f"{optimal_solution.dc_ratio:.2f}",
+                        f"{optimal_solution.wood_volume:.2f} mm"
+                    ]
+                }
+                final_df = pd.DataFrame(final_data).set_index('Parameter')
 
                 print("\n---------------------------------------------------------")
                 print(f"[bold red]Final (Optimal) Design for Level {level}[/bold red]")
-                self._print_design_result(optimal_solution, is_final=True)
-            
+                pprint(final_df)
+
             print("---------------------------------------------------------\n")
-
-    def _print_design_result(self, result: DesignResult, is_final: bool = False, is_summary: bool = False):
-        """
-        Helper method to print a single design result in a formatted way.
-
-        Parameters
-        ----------
-        result : DesignResult
-            The result object to print.
-        is_final : bool, optional
-            If True, prints the full detailed output for a final design.
-        is_summary : bool, optional
-            If True, prints a condensed summary.
-        """
-        if result.stud is None:
-            return
-
-        if is_final:
-            print(f"[bold green]Governing Combo: {result.governing_combo}[/bold green]")
-
-        display_spacing = self.unit_system.from_metric(result.spacing, 'length_in_mm')
-        spacing_unit = self.unit_system.get_display_unit('length_in_mm')
-
-        print(
-            f"({result.plys})-{result.stud.name} "
-            f"{result.stud.material.name} @ {display_spacing:.0f} {spacing_unit} o/c"
-        )
-
-        if is_final:
-            display_pf = self.unit_system.from_metric(result.Pf, 'load')
-            display_pr = self.unit_system.from_metric(result.Pr, 'load')
-            load_unit = self.unit_system.get_display_unit('load')
-            print(f"Factored Load (Pf) = {display_pf:.2f} {load_unit}")
-            print(f"Factored Resistance (Pr) = {display_pr:.2f} {load_unit}")
-
-        print(f"DC Ratio = {result.dc_ratio:.2f}")
-        print(f"Wood Volume Proxy = {result.wood_volume:.2f} mm")

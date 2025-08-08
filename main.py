@@ -27,7 +27,7 @@ def main():
     # If using Imperial, inputs are in ft, psf, etc.
     # If using Metric, inputs are in m, kPa, etc.
     inputs = {
-        "wall_heights": [10, 10, 10, 10, 12],  # ft or m
+        "wall_heights": [10],  # ft or m
         "spacings": [16, 12, 8],  # in or mm
         "plys": [1, 2, 3],  # number of stud plys
         "roof_dead": 22,  # psf or kPa
