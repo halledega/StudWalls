@@ -4,6 +4,7 @@ This module defines the DesignResult dataclass for storing analysis results.
 from dataclasses import dataclass, field
 from typing import Any
 from ..models.section import Section
+from ..models.story import Story
 
 
 @dataclass
@@ -21,6 +22,8 @@ class DesignResult:
     ----------
     level : int
         The floor level number this result applies to (e.g., 1, 2, 3).
+    story : Story | None
+        The Story object representing the story this result applies to.
     stud : Section | None
         The Section object representing the stud used in the design.
     spacing : float
@@ -41,6 +44,7 @@ class DesignResult:
         A proxy for wood volume per unit length of wall (Area / spacing).
     """
     level: int = 0
+    story: Story | None = None
     stud: Section | None = None
     spacing: float = 0
     plys: int = 0
