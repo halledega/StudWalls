@@ -11,10 +11,11 @@ This module defines the main StudWallCalculator class for performing
 stud wall design calculations.
 """
 from ..models.section import Section
-from ..models.joist_and_plank import Joist_and_Plank
+from ..models.wood import Wood
 from ..models.O86 import O86_20
 from ..core.units import Units, UnitSystem
 from ..core.results import DesignResult
+from ..core.database import get_library_db
 
 
 class StudWallCalculator:
@@ -38,7 +39,7 @@ class StudWallCalculator:
         A dictionary storing the final DesignResult object for each floor level.
     """
 
-    def __init__(self, units: Units = Units.Imperial):
+    def __init__(self, units: Units = Units.Imperial, wall: 'Wall' = None):
         """
         Initializes the StudWallCalculator.
 
@@ -50,41 +51,26 @@ class StudWallCalculator:
         units : Units, optional
             The unit system to be used for inputs and outputs, by default
             Units.Imperial.
+        wall : Wall, optional
+            The wall object to be analyzed.
         """
         self.units = units
         self.unit_system = UnitSystem(units)
         self._o86 = O86_20
         self.final_results = {}
+        self.wall = wall
 
         self._materials = self._load_materials()
         self._studs = self._initialize_studs()
         self._spacings = [406, 305, 203]  # Corresponds to 16", 12", 8"
 
-        self._set_inputs(
-            wall_roof_trib=2,
-            wall_floor_trib=11,
-            wall_heights=[10, 10, 10, 10, 12],
-            roof_dead=22,
-            roof_snow=69,
-            floor_dead=35,
-            floor_live=40,
-            partitions=20,
-            wall_sw=12
-        )
-
     def _load_materials(self):
         """
-        Load wood material properties from the CSV database.
+        Load wood material properties from the database.
         """
-        data_dir = Path(__file__).parent.parent / 'data'
-        csv_path = data_dir / 'joist_and_plank.csv'
-        materials = {}
-        with open(csv_path, mode='r') as file:
-            csv_reader = csv.DictReader(file)
-            for row in csv_reader:
-                temp = {k: float(v) if v.replace('.', '', 1).isdigit() else v for k, v in row.items()}
-                material = Joist_and_Plank(**temp)
-                materials[material.name] = material
+        db = next(get_library_db())
+        materials = {m.species + " " + m.grade: m for m in db.query(Wood).all()}
+        db.close()
         return materials
 
     def _initialize_studs(self):
@@ -92,43 +78,36 @@ class StudWallCalculator:
         Initializes a list of stud Section objects for common lumber sizes.
         """
         return [
-            Section(38, 89, self._materials['SPF No1/No2']),
-            Section(38, 140, self._materials['SPF No1/No2']),
-            Section(38, 184, self._materials['SPF No1/No2']),
+            Section(width=38, depth=89, material=self._materials['Spruce-Pine-Fir No1/No2']),
+            Section(width=38, depth=140, material=self._materials['Spruce-Pine-Fir No1/No2']),
+            Section(width=38, depth=184, material=self._materials['Spruce-Pine-Fir No1/No2']),
         ]
-
-    def _set_inputs(self, **kwargs):
-        """
-        Set and convert all physical inputs to the internal metric system.
-        """
-        self.wall_roof_trib_m = self.unit_system.to_metric(kwargs.get('wall_roof_trib', 2), 'length_ft_m')
-        self.wall_floor_trib_m = self.unit_system.to_metric(kwargs.get('wall_floor_trib', 11), 'length_ft_m')
-        self.wall_heights_mm = [self.unit_system.to_metric(h, 'length_ft_mm') for h in kwargs.get('wall_heights', [10, 10, 10, 10, 12])]
-        self.roof_dead_kpa = self.unit_system.to_metric(kwargs.get('roof_dead', 22), 'pressure')
-        self.roof_snow_kpa = self.unit_system.to_metric(kwargs.get('roof_snow', 69), 'pressure')
-        self.floor_dead_kpa = self.unit_system.to_metric(kwargs.get('floor_dead', 35), 'pressure')
-        self.floor_live_kpa = self.unit_system.to_metric(kwargs.get('floor_live', 40), 'pressure')
-        self.partitions_kpa = self.unit_system.to_metric(kwargs.get('partitions', 20), 'pressure')
-        self.wall_sw_kpa = self.unit_system.to_metric(kwargs.get('wall_sw', 12), 'pressure')
-        self.n_floors = len(self.wall_heights_mm)
 
     def _calculate_loads(self):
         """
         Calculate and accumulate unfactored loads for all floors.
         """
         floors = {}
-        for i in range(self.n_floors):
+        for i, story in enumerate(self.wall.stories):
+            # Combine left and right loads for the current story
+            all_loads_for_story = self.wall.loads_left[i] + self.wall.loads_right[i]
+
+            dead_kpa = sum(load.value for load in all_loads_for_story if load.case == 'dead')
+            live_kpa = sum(load.value for load in all_loads_for_story if load.case == 'live')
+            snow_kpa = sum(load.value for load in all_loads_for_story if load.case == 'snow')
+            partition_kpa = sum(load.value for load in all_loads_for_story if load.case == 'partition')
+
             if i == 0:  # Top floor (roof)
-                dl = (self.roof_dead_kpa * self.wall_roof_trib_m + self.wall_sw_kpa * (self.wall_heights_mm[i] / 1000))
+                dl = (dead_kpa * (self.wall.total_trib[i] / 1000) + self.wall.sw)
                 ll = 0
-                sl = self.roof_snow_kpa * self.wall_roof_trib_m
+                sl = snow_kpa * (self.wall.total_trib[i] / 1000)
             else:  # Typical floor
-                dl = ((self.floor_dead_kpa + self.partitions_kpa) * self.wall_floor_trib_m + self.wall_sw_kpa * (self.wall_heights_mm[i] / 1000))
-                ll = self.floor_live_kpa * self.wall_floor_trib_m
+                dl = (dead_kpa + partition_kpa) * (self.wall.total_trib[i] / 1000) + self.wall.sw
+                ll = live_kpa * (self.wall.total_trib[i] / 1000)
                 sl = 0
-        
-            floors[self.n_floors - i] = {'DL': dl, 'LL': ll, 'SL': sl}
-        
+
+            floors[len(self.wall.stories) - i] = {'DL': dl, 'LL': ll, 'SL': sl}
+
         floor_df = pd.DataFrame(floors).transpose()
         return floor_df.cumsum()
 
@@ -166,6 +145,7 @@ class StudWallCalculator:
         """
         Performs the main stud wall design calculation and prints the results.
         """
+        self.final_results = {}
         loads_df = self._calculate_loads()
         print("\n[bold blue]Unfactored Total Loads per floor[/bold blue]")
         pprint(loads_df)
@@ -174,25 +154,25 @@ class StudWallCalculator:
         print("\n[bold blue]Factored Loads Combos per floor[/bold blue]")
         pprint(combo_df)
 
-        for level in range(self.n_floors, 0, -1):
-            h = self.wall_heights_mm[self.n_floors - level]
-            load_dict = loads_df.loc[level].to_dict()
-            load_combo_dict = combo_df.loc[level].to_dict()
+        for level, story in enumerate(self.wall.stories):
+            h = story.height
+            load_dict = loads_df.loc[level + 1].to_dict()
+            load_combo_dict = combo_df.loc[level + 1].to_dict()
 
             all_solutions_for_level = []
             num_combinations = len(self._studs) * len(self._spacings) * 3
 
             with Progress() as progress:
-                task = progress.add_task(f"[bold red]Processing Level {level}...[/bold red]", total=num_combinations)
+                task = progress.add_task(f"[bold red]Processing Level {level + 1}...[/bold red]", total=num_combinations)
                 for stud_template in self._studs:
                     for spacing in self._spacings:
                         for plys in range(1, 4):
                             progress.update(task, advance=1)
                             stud = Section(stud_template.width, stud_template.depth, stud_template.material, plys)
-                            stud.lu['width'] = 152
-                            stud.lu['depth'] = h
+                            stud.lu['width'] = self.wall.lu[level][0]
+                            stud.lu['depth'] = self.wall.lu[level][1]
 
-                            governing_result_for_design = DesignResult(level=level, stud=stud, spacing=spacing, plys=plys)
+                            governing_result_for_design = DesignResult(level=level, story=story, stud=stud, spacing=spacing, plys=plys)
                             max_dc_ratio = 0
                             governing_combo = None
 
@@ -208,9 +188,9 @@ class StudWallCalculator:
                                 elif combo == '1.25DL+1.5SL':
                                     duration, long, short = 'Standard', load_dict['DL'], load_dict['SL']
 
-                                pf = load * spacing / 1000
-                                pl = long * spacing / 1000
-                                ps = short * spacing / 1000
+                                pf = load * (spacing / 1000)
+                                pl = long * (spacing / 1000)
+                                ps = short * (spacing / 1000)
 
                                 pr_calcs, k_factors = self._size_stud(stud, duration, pl, ps)
                                 pr = min(pr_calcs['width']['Pr'], pr_calcs['depth']['Pr']) / 1000
@@ -229,7 +209,7 @@ class StudWallCalculator:
                             all_solutions_for_level.append(governing_result_for_design)
 
             print("---------------------------------------------------------")
-            print(f"[bold cyan]All Design Options for Level {level}[/bold cyan]")
+            print(f"[bold cyan]All Design Options for Level {level + 1}[/bold cyan]")
 
             all_solutions_for_level.sort(key=lambda x: (x.stud.depth, x.plys, x.spacing))
 
@@ -252,7 +232,7 @@ class StudWallCalculator:
 
             if not valid_solutions:
                 print("\n[bold yellow]No adequate design found.[/bold yellow]")
-                self.final_results[level] = DesignResult(level=level, stud=None)
+                self.final_results[level] = DesignResult(level=level, story=story, stud=None)
             else:
                 optimal_solution = sorted(valid_solutions, key=lambda x: x.wood_volume)[0]
                 self.final_results[level] = optimal_solution
@@ -283,7 +263,10 @@ class StudWallCalculator:
                 final_df = pd.DataFrame(final_data).set_index('Parameter')
 
                 print("\n---------------------------------------------------------")
-                print(f"[bold red]Final (Optimal) Design for Level {level}[/bold red]")
+                print(f"[bold red]Final (Optimal) Design for Level {level + 1}[/bold red]")
                 pprint(final_df)
 
             print("---------------------------------------------------------\n")
+
+    def get_results(self):
+        return self.final_results

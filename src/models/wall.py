@@ -1,17 +1,35 @@
-from src.models.section import Section
+"""
+This module defines the SQLAlchemy model for a wall.
+"""
 
-class Wall:
-    def __init__(self, stud: Section, stories: dict, length: float):
-        self._name = ''
-        self.stud = stud
-        self.stories = stories
-        self.length = length
-        self._volume = 0
+from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
+from src.core.database import Base
 
-    @property
-    def name(self):
-        return f"{self.stud.Plys}-{self.stud.Name}"
+wall_story_association = Table('wall_story_association', Base.metadata,
+    Column('wall_id', Integer, ForeignKey('walls.id')),
+    Column('story_id', Integer, ForeignKey('stories.id'))
+)
 
-    @property
-    def volume(self, story: str = ""):
-        return self.stud.Area * self.stories[story].height
+class Wall(Base):
+    """
+    Represents a wall in the database.
+    """
+    __tablename__ = 'walls'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    length = Column(Float)
+    sw = Column(Float) # self-weight
+
+    tribs = Column(JSON)
+    loads_left = Column(JSON)
+    loads_right = Column(JSON)
+    lu = Column(JSON)
+
+    stories = relationship("Story", secondary=wall_story_association)
+
+    def __repr__(self):
+        return f"<Wall(name='{self.name}')>"
+
