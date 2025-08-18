@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>919</width>
-     <height>23</height>
+     <height>33</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -112,7 +112,7 @@
         </size>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="project_info_tabWidgetPage">
         <attribute name="title">
@@ -280,7 +280,15 @@
         <attribute name="title">
          <string>Results</string>
         </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_2"/>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QTextEdit" name="result_detailed_textEdit">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>

@@ -28,7 +28,7 @@ class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
         super().__init__()
         # Placeholder properties (These are set in other methods below)
         self.db_session = next(get_working_db())
-        # Setup the UI elements from the loaded UI file
+        # Set up the UI elements from the loaded UI file
         self.setupUi(self)
 
         # Initialize the calculator with Metric as default
@@ -156,7 +156,7 @@ class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
 
     def show_stories_dialog(self):
         """Opens the dialog to edit all project stories."""
-        used_story_names = {s.name for wall in self.db_session.query(Wall).all() for s in wall.stories}
+        used_story_names = {s.story.name for wall in self.db_session.query(Wall).all() for s in wall.stories}
         dialog = StoriesDialog(self.db_session, used_story_names)
         dialog.exec()
 

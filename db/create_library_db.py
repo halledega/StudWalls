@@ -5,6 +5,7 @@ This script creates and populates the library.db file.
 import csv
 import os
 import sys
+import json
 
 # Add the project root to the python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,6 +15,7 @@ from src.models.wood import Wood
 from src.models.story import Story
 from src.models.loads import Load
 from src.models.wall import Wall
+from src.models.wall_story import WallStory
 
 def populate_wood_materials():
     """Reads the joist_and_plank.csv file and populates the wood_materials table."""
@@ -37,43 +39,82 @@ def populate_wood_materials():
     db.commit()
     db.close()
 
-def create_dummy_data():
-    """Creates dummy stories, loads, and walls for testing."""
+def populate_from_csv():
+    """Reads data from CSV files and populates the database."""
     db = LibrarySessionLocal()
 
-    # Create dummy stories
-    story1 = Story(name="Story 1", height=3000, floor_thickness=150)
-    story2 = Story(name="Story 2", height=3000, floor_thickness=150)
-    db.add_all([story1, story2])
+    # Stories
+    with open('csv/stories.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        stories = {row['id']: Story(**row) for row in reader}
+        db.add_all(stories.values())
+
+    # Loads
+    with open('csv/loads.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        loads = {row['id']: Load(**row) for row in reader}
+        db.add_all(loads.values())
+
+    # Walls
+    with open('csv/walls.csv', 'r') as f:
+        reader = csv.DictReader(f)
+        walls_data = list(reader)
+    
+    walls = {}
+    for row in walls_data:
+        row.pop('tribs', None)
+        row.pop('loads_left', None)
+        row.pop('loads_right', None)
+        row.pop('lu', None)
+        wall = Wall(**row)
+        walls[row['id']] = wall
+        db.add(wall)
+
     db.commit()
 
-    # Create dummy loads
-    load1 = Load(name="Dead Load", case="Dead", value=10, load_type="Area")
-    load2 = Load(name="Live Load", case="Live", value=20, load_type="Area")
-    db.add_all([load1, load2])
+    # WallStory Associations
+    wall1 = walls['1']
+    wall2 = walls['2']
+
+    # Wall1 stories
+    wall1_stories = [stories[str(i)] for i in range(1, 4)]
+    for story in wall1_stories:
+        ws = WallStory(wall=wall1, story=story)
+        ws.loads_left = [loads['4'], loads['5'], loads['7']]
+        ws.loads_right = [loads['4'], loads['5'], loads['7']]
+        db.add(ws)
+
+    # Wall2 stories
+    wall2_stories = [stories[str(i)] for i in range(1, 7)]
+    for story in wall2_stories:
+        ws = WallStory(wall=wall2, story=story)
+        if story.name == "Roof":
+            ws.loads_left = [loads['1'], loads['2'], loads['3']]
+            ws.loads_right = [loads['1'], loads['2'], loads['3']]
+        else:
+            ws.loads_left = [loads['4'], loads['5'], loads['7']]
+            ws.loads_right = [loads['4'], loads['5'], loads['7']]
+        db.add(ws)
+        
     db.commit()
 
-    # Create a dummy wall
-    wall1 = Wall(
-        name="Test Wall",
-        length=5000,
-        sw=0.5,
-        tribs=[[1, 1], [1, 1]],
-        loads_left=[[1, 2], [1, 2]],
-        loads_right=[[1, 2], [1, 2]],
-        lu=[[3000, 600], [3000, 600]],
-        stories=[story1, story2]
-    )
-    db.add(wall1)
-    db.commit()
+    # Set tribs and lu
+    for wall in walls.values():
+        wall.tribs = [[1000, 1500]] * len(wall.stories)
+        wall.lu = [[3000, 152]] * len(wall.stories)
 
+    db.commit()
     db.close()
+
 
 if __name__ == "__main__":
     print("Creating library database...")
+    # Remove the existing database file if it exists
+    if os.path.exists("db/library.db"):
+        os.remove("db/library.db")
     create_all_tables(library_engine)
     print("Populating wood materials...")
     populate_wood_materials()
-    print("Creating dummy data...")
-    create_dummy_data()
+    print("Populating from CSV...")
+    populate_from_csv()
     print("Library database created successfully.")

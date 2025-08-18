@@ -10,12 +10,13 @@ from rich.progress import Progress
 This module defines the main StudWallCalculator class for performing
 stud wall design calculations.
 """
+from ..models.loads import Load
 from ..models.section import Section
 from ..models.wood import Wood
 from ..models.O86 import O86_20
 from ..core.units import Units, UnitSystem
 from ..core.results import DesignResult
-from ..core.database import get_library_db
+from ..core.database import get_library_db, get_working_db
 
 
 class StudWallCalculator:
@@ -88,22 +89,23 @@ class StudWallCalculator:
         Calculate and accumulate unfactored loads for all floors.
         """
         floors = {}
-        for i, story in enumerate(self.wall.stories):
-            # Combine left and right loads for the current story
-            all_loads_for_story = self.wall.loads_left[i] + self.wall.loads_right[i]
+        for i, wall_story in enumerate(self.wall.stories):
+            all_loads_for_story = wall_story.loads_left + wall_story.loads_right
 
             dead_kpa = sum(load.value for load in all_loads_for_story if load.case == 'dead')
             live_kpa = sum(load.value for load in all_loads_for_story if load.case == 'live')
             snow_kpa = sum(load.value for load in all_loads_for_story if load.case == 'snow')
             partition_kpa = sum(load.value for load in all_loads_for_story if load.case == 'partition')
 
+            total_trib = self.wall.tribs[i][0] + self.wall.tribs[i][1]
+
             if i == 0:  # Top floor (roof)
-                dl = (dead_kpa * (self.wall.total_trib[i] / 1000) + self.wall.sw)
+                dl = (dead_kpa * (total_trib / 1000) + self.wall.sw)
                 ll = 0
-                sl = snow_kpa * (self.wall.total_trib[i] / 1000)
+                sl = snow_kpa * (total_trib / 1000)
             else:  # Typical floor
-                dl = (dead_kpa + partition_kpa) * (self.wall.total_trib[i] / 1000) + self.wall.sw
-                ll = live_kpa * (self.wall.total_trib[i] / 1000)
+                dl = (dead_kpa + partition_kpa) * (total_trib / 1000) + self.wall.sw
+                ll = live_kpa * (total_trib / 1000)
                 sl = 0
 
             floors[len(self.wall.stories) - i] = {'DL': dl, 'LL': ll, 'SL': sl}
@@ -136,8 +138,8 @@ class StudWallCalculator:
             "Kt": 1.0,
         }
         pr_calcs = {
-            'width': self._o86.CL6_5_6_2_3(stud, stud.lu['width'], **k_factors),
-            'depth': self._o86.CL6_5_6_2_3(stud, stud.lu['depth'], **k_factors),
+            'width': self._o86.CL6_5_6_2_3(stud, stud.lu_width, **k_factors),
+            'depth': self._o86.CL6_5_6_2_3(stud, stud.lu_depth, **k_factors),
         }
         return pr_calcs, k_factors
 
@@ -154,8 +156,8 @@ class StudWallCalculator:
         print("\n[bold blue]Factored Loads Combos per floor[/bold blue]")
         pprint(combo_df)
 
-        for level, story in enumerate(self.wall.stories):
-            h = story.height
+        for level, wall_story in enumerate(self.wall.stories):
+            h = wall_story.story.height
             load_dict = loads_df.loc[level + 1].to_dict()
             load_combo_dict = combo_df.loc[level + 1].to_dict()
 
@@ -168,11 +170,16 @@ class StudWallCalculator:
                     for spacing in self._spacings:
                         for plys in range(1, 4):
                             progress.update(task, advance=1)
-                            stud = Section(stud_template.width, stud_template.depth, stud_template.material, plys)
-                            stud.lu['width'] = self.wall.lu[level][0]
-                            stud.lu['depth'] = self.wall.lu[level][1]
+                            stud = Section(
+                                width=stud_template.width,
+                                depth=stud_template.depth,
+                                material=stud_template.material,
+                                plys=plys,
+                                lu_width=self.wall.lu[level][0],
+                                lu_depth=self.wall.lu[level][1]
+                            )
 
-                            governing_result_for_design = DesignResult(level=level, story=story, stud=stud, spacing=spacing, plys=plys)
+                            governing_result_for_design = DesignResult(level=level, story=wall_story.story, stud=stud, spacing=spacing, plys=plys)
                             max_dc_ratio = 0
                             governing_combo = None
 
@@ -232,7 +239,7 @@ class StudWallCalculator:
 
             if not valid_solutions:
                 print("\n[bold yellow]No adequate design found.[/bold yellow]")
-                self.final_results[level] = DesignResult(level=level, story=story, stud=None)
+                self.final_results[level] = DesignResult(level=level, story=wall_story.story, stud=None)
             else:
                 optimal_solution = sorted(valid_solutions, key=lambda x: x.wood_volume)[0]
                 self.final_results[level] = optimal_solution

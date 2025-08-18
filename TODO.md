@@ -18,9 +18,10 @@
     - [x] Create a database engine/session management module for two databases (library and working).
     - [x] Create a migration script to populate a `library.db` with default data (wood materials, etc.) and dummy project data (stories, loads, walls).
     - [x] Refactor data access logic to use the two-database system.
-4.  Implelemnt graphics ot the graphics view widgets. The currently active wall shoudl be drawn (setion and elevator?)
+    - [x] Refactor Wall/Story/Load relationship to use proper SQLAlchemy relationships instead of JSON.
+4.  Implement graphics ot the graphics view widgets. The currently active wall shoudl be drawn (setion and elevator?)
 5.  Update testing to fully capture anything changed or missing
-6.  Review final app and suggest any cleanup or impovements
+6.  Review final app and suggest any cleanup or improvements
 7.  Fully document all code so even a novice python programmer or someone unfamiliar with PySide can review the code
 8.  Create executable with pysintaller or similar. I'd like you to suggest some options with pros and cons features etc.
-9.  Run application after any major refactoring to check for regressions.
+9.  Run application after any major refactoring to check for regressions. (Recurring task)

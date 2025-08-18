@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AboutDialog</class>
+ <widget class="QDialog" name="AboutDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>About StudWalls</string>
+  </property>
+
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <!-- Title -->
+   <item>
+    <widget class="QLabel" name="labelTitle">
+     <property name="text">
+      <string><b>StudWalls</b></string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+
+   <!-- Version -->
+   <item>
+    <widget class="QLabel" name="labelVersion">
+     <property name="text">
+      <string>Version: 1.0.0</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+
+   <!-- License Text -->
+   <item>
+    <widget class="QTextBrowser" name="textBrowserLicense">
+     <property name="html">
+      <string>
+       <![CDATA[
+       <p style="text-align:center;">© 2025 Michael Halliday — All Rights Reserved</p>
+       <p style="text-align:center;">Proprietary and confidential. Internal use only within [Your Company Name].</p>
+       <h4>No Warranty</h4>
+       <p>This software is provided "AS IS" without any express or implied warranties, including but not limited to merchantability or fitness for a particular purpose. The entire risk as to quality and performance is with the user. [Your Company Name] is not liable for any damages arising from its use.</p>
+       <h4>Third‑Party Components</h4>
+       <ul>
+         <li>PySide6 — Licensed under the GNU Lesser General Public License v3.0 (LGPLv3)<br/>
+         © The Qt Company Ltd. and/or its subsidiary(-ies) —
+         <a href="https://doc.qt.io/qtforpython/licenses.html">License Info</a></li>
+       </ul>
+       ]]>
+      </string>
+     </property>
+     <property name="openExternalLinks">
+      <bool>true</bool>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+
+   <!-- Close Button -->
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

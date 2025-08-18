@@ -66,7 +66,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 919, 23))
+        self.menubar.setGeometry(QRect(0, 0, 919, 33))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         self.menuEdit = QMenu(self.menubar)
@@ -232,6 +232,12 @@ class Ui_MainWindow(object):
         self.results_tabWidgetPage.setObjectName(u"results_tabWidgetPage")
         self.horizontalLayout_2 = QHBoxLayout(self.results_tabWidgetPage)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.result_detailed_textEdit = QTextEdit(self.results_tabWidgetPage)
+        self.result_detailed_textEdit.setObjectName(u"result_detailed_textEdit")
+        self.result_detailed_textEdit.setReadOnly(True)
+
+        self.horizontalLayout_2.addWidget(self.result_detailed_textEdit)
+
         self.main_tabWidget.addTab(self.results_tabWidgetPage, "")
 
         self.horizontalLayout.addWidget(self.main_tabWidget)
@@ -262,7 +268,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.main_tabWidget.setCurrentIndex(0)
+        self.main_tabWidget.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)

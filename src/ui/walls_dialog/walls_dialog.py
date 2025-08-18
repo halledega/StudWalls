@@ -15,6 +15,7 @@ from src.ui.walls_dialog.walls_ui.walls_dialog import Ui_walls_Dialog
 from src.models.wall import Wall
 from src.models.story import Story
 from src.models.loads import Load
+from src.models.wall_story import WallStory
 
 
 class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
@@ -72,8 +73,8 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
             self.top_story_comboBox.addItem(story.name)
 
         if self.wall.stories:
-            self.bottom_story_comboBox.setCurrentText(self.wall.stories[0].name)
-            self.top_story_comboBox.setCurrentText(self.wall.stories[-1].name)
+            self.bottom_story_comboBox.setCurrentText(self.wall.stories[0].story.name)
+            self.top_story_comboBox.setCurrentText(self.wall.stories[-1].story.name)
 
         self._update_wall_span()
 
@@ -91,14 +92,24 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
             self.select_story_comboBox.clear()
             return
 
-        self.wall.stories = self.stories[start_index:end_index + 1]
-        num_stories = len(self.wall.stories)
+        selected_stories = self.stories[start_index:end_index + 1]
+        num_stories = len(selected_stories)
+
+        existing_wall_stories = {ws.story.id: ws for ws in self.wall.stories}
+        new_wall_stories = []
+        for story in selected_stories:
+            if story.id in existing_wall_stories:
+                new_wall_stories.append(existing_wall_stories[story.id])
+            else:
+                new_wall_stories.append(WallStory(story=story))
+        
+        self.wall.stories = new_wall_stories
 
         # Adjust data lists to match story count
         self._adjust_data_lists(num_stories)
 
         self.n_stoiries_label.setText(f"Stories: {num_stories}")
-        total_height = sum(s.height for s in self.wall.stories)
+        total_height = sum(s.story.height for s in self.wall.stories)
         self.wall_height_label.setText(f"Height: {total_height / 1000:.2f} m")
 
         self._populate_trib_table()
@@ -115,17 +126,6 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         else:
             self.wall.tribs = self.wall.tribs[:num_stories]
 
-        # Loads
-        for load_list_name in ['loads_left', 'loads_right']:
-            if not getattr(self.wall, load_list_name):
-                setattr(self.wall, load_list_name, [])
-            load_list = getattr(self.wall, load_list_name)
-            current_len = len(load_list)
-            if num_stories > current_len:
-                load_list.extend([[] for _ in range(num_stories - current_len)])
-            else:
-                setattr(self.wall, load_list_name, load_list[:num_stories])
-
         # Unsupported Lengths (lu)
         if not self.wall.lu:
             self.wall.lu = []
@@ -140,9 +140,9 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
     def _populate_trib_table(self):
         self.tribs_model.clear()
         self.tribs_model.setHorizontalHeaderLabels(['Story', 'Left Trib (mm)', 'Right Trib (mm)'])
-        for i, story in enumerate(self.wall.stories):
+        for i, wall_story in enumerate(self.wall.stories):
             row = [
-                Qtgui.QStandardItem(story.name),
+                Qtgui.QStandardItem(wall_story.story.name),
                 Qtgui.QStandardItem(str(self.wall.tribs[i][0])),
                 Qtgui.QStandardItem(str(self.wall.tribs[i][1]))
             ]
@@ -153,7 +153,7 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self.select_story_comboBox.blockSignals(True)
         self.select_story_comboBox.clear()
 
-        story_names = [s.name for s in self.wall.stories]
+        story_names = [s.story.name for s in self.wall.stories]
         if story_names:
             self.select_story_comboBox.addItems(story_names)
 
@@ -168,8 +168,6 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         if index < 0:
             return
 
-        # Save data for the story we are leaving, then populate for the new one.
-        self._save_loads_data(self.current_load_story_index)
         self.current_load_story_index = index
         self._populate_load_views()
 
@@ -184,14 +182,9 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
             return
 
         # Get assigned loads for the current story
-        assigned_left_load_ids = self.wall.loads_left[self.current_load_story_index]
-        assigned_right_load_ids = self.wall.loads_right[self.current_load_story_index]
-
-        assigned_left_loads = self.db_session.query(Load).filter(Load.id.in_(assigned_left_load_ids)).all()
-        assigned_right_loads = self.db_session.query(Load).filter(Load.id.in_(assigned_right_load_ids)).all()
-
-        assigned_left_names = [l.name for l in assigned_left_loads]
-        assigned_right_names = [l.name for l in assigned_right_loads]
+        wall_story = self.wall.stories[self.current_load_story_index]
+        assigned_left_names = [l.name for l in wall_story.loads_left]
+        assigned_right_names = [l.name for l in wall_story.loads_right]
 
         self.left_loads_model.setStringList(sorted(assigned_left_names))
         self.right_loads_model.setStringList(sorted(assigned_right_names))
@@ -219,9 +212,10 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         if not load_obj:
             return
 
-        load_list = getattr(self.wall, side)[self.current_load_story_index]
-        if load_obj.id not in load_list:
-            load_list.append(load_obj.id)
+        wall_story = self.wall.stories[self.current_load_story_index]
+        load_list = getattr(wall_story, side)
+        if load_obj not in load_list:
+            load_list.append(load_obj)
 
         self._populate_load_views()
 
@@ -236,9 +230,10 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         if not load_obj:
             return
 
-        load_list = getattr(self.wall, side)[self.current_load_story_index]
-        if load_obj.id in load_list:
-            load_list.remove(load_obj.id)
+        wall_story = self.wall.stories[self.current_load_story_index]
+        load_list = getattr(wall_story, side)
+        if load_obj in load_list:
+            load_list.remove(load_obj)
 
         self._populate_load_views()
 
@@ -251,10 +246,6 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
                 self.wall.tribs[i][1] = float(self.tribs_model.item(i, 2).text())
             except (ValueError, AttributeError): # Handle empty or non-numeric cells gracefully
                 pass
-
-    def _save_loads_data(self, story_index):
-        # This method is no longer needed as we are modifying the lists directly
-        pass
 
     def accept(self):
         self.wall.name = self.wall_name_lineEdit.text()

@@ -23,5 +23,13 @@ class Section(Base):
     material_id = Column(Integer, ForeignKey('wood_materials.id'))
     material = relationship("Wood")
 
+    @property
+    def area(self):
+        return self.width * self.depth * self.plys
+
+    @property
+    def name(self):
+        return f"{self.width}x{self.depth}"
+
     def __repr__(self):
         return f"<Section(width={self.width}, depth={self.depth}, plys={self.plys})>"

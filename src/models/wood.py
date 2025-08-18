@@ -23,6 +23,10 @@ class Wood(Base):
     E05 = Column(Float)
     material_type = Column(String)
 
+    @property
+    def name(self):
+        return f"{self.species} {self.grade}"
+
     def __repr__(self):
         return f"<Wood(species='{self.species}', grade='{self.grade}')>"
 
