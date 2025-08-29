@@ -1,7 +1,14 @@
+# Instructions
+
+a) Always fully explain all proposed changes including reasoning and impact
+b) Always ask to run app after code changes to review runtime error
+c) keep the list below updated with new tasks and checking off complete ones
+
 # TODO List
 
 1.  Complete actions in Define menu (review @src/ui/main_window/main_ui, sub task for each action not implemented)
-    - [ ] Implement "Materials" action
+    - [x] Implement "Materials" action
+        - [x] Allow adding new categories, types, grades and species to a material.
     - [ ] Implement "Studs" action
     - [ ] Implement "Loads" action
     - [ ] Implement "Load Combinations" action

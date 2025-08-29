@@ -12,6 +12,8 @@ class Wood(Base):
     __tablename__ = 'wood_materials'
 
     id = Column(Integer, primary_key=True)
+    name = Column(String)
+    category = Column(String)
     species = Column(String)
     grade = Column(String)
     fb = Column(Float)
@@ -23,12 +25,8 @@ class Wood(Base):
     E05 = Column(Float)
     material_type = Column(String)
 
-    @property
-    def name(self):
-        return f"{self.species} {self.grade}"
-
     def __repr__(self):
-        return f"<Wood(species='{self.species}', grade='{self.grade}')>"
+        return f"<Wood(name='{self.name}', species='{self.species}', grade='{self.grade}')>"
 
     
     

@@ -20,12 +20,32 @@ class Section(Base):
     lu_width = Column(Float, default=0)
     lu_depth = Column(Float, default=0)
 
-    material_id = Column(Integer, ForeignKey('wood_materials.id'))
-    material = relationship("Wood")
+    studs = relationship("Stud", back_populates="section")
 
     @property
-    def area(self):
+    def Ag(self):
+        """Gross Area"""
         return self.width * self.depth * self.plys
+
+    @property
+    def Ix(self):
+        """Moment of Inertia about the strong axis"""
+        return (self.plys * self.width) * (self.depth ** 3) / 12
+
+    @property
+    def Iy(self):
+        """Moment of Inertia about the weak axis"""
+        return self.depth * ((self.plys * self.width) ** 3) / 12
+
+    @property
+    def Sx(self):
+        """Section Modulus about the strong axis"""
+        return self.Ix / (self.depth / 2)
+
+    @property
+    def Sy(self):
+        """Section Modulus about the weak axis"""
+        return self.Iy / ((self.plys * self.width) / 2)
 
     @property
     def name(self):

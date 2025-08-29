@@ -8,6 +8,8 @@ from src.models.story import Story
 from src.models.loads import Load
 from src.models.wall import Wall
 from src.models.wall_story import WallStory
+from src.models.stud import Stud
+from src.models.section import Section
 
 def new_project():
     """Creates a new project by copying data from the library to the working database."""
@@ -22,6 +24,8 @@ def new_project():
     wood_map = {}
     for wood in library_db.query(Wood).all():
         new_wood = Wood(
+            name=wood.name,
+            category=wood.category,
             species=wood.species,
             grade=wood.grade,
             fb=wood.fb,
@@ -35,6 +39,21 @@ def new_project():
         )
         wood_map[wood] = new_wood
         working_db.add(new_wood)
+
+    for stud in library_db.query(Stud).all():
+        new_section = Section(
+            width=stud.section.width,
+            depth=stud.section.depth,
+            plys=stud.section.plys,
+            lu_width=stud.section.lu_width,
+            lu_depth=stud.section.lu_depth
+        )
+        new_stud = Stud(
+            name=stud.name,
+            section=new_section,
+            material=wood_map[stud.material]
+        )
+        working_db.add(new_stud)
 
     story_map = {}
     for story in library_db.query(Story).all():

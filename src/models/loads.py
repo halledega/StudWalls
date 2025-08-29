@@ -1,9 +1,18 @@
 """
 This module defines the SQLAlchemy model for loads.
 """
-
 from sqlalchemy import Column, Integer, String, Float
 from src.core.database import Base
+from enum import Enum
+
+class LoadCase(Enum):
+    """Enumeration for the available unit systems."""
+    Dead = 0
+    Live = 1
+    Snow = 2
+    Wind = 3
+    Seismic = 4
+    Partition = 5
 
 class Load(Base):
     """

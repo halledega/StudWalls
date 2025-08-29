@@ -20,7 +20,7 @@ class Wall(Base):
     tribs = Column(JSON)
     lu = Column(JSON)
 
-    stories = relationship("WallStory", cascade="all, delete-orphan")
+    stories = relationship("WallStory", back_populates="wall", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Wall(name='{self.name}')>"

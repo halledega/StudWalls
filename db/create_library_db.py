@@ -16,6 +16,8 @@ from src.models.story import Story
 from src.models.loads import Load
 from src.models.wall import Wall
 from src.models.wall_story import WallStory
+from src.models.section import Section
+from src.models.stud import Stud
 
 def populate_wood_materials():
     """Reads the joist_and_plank.csv file and populates the wood_materials table."""
@@ -24,8 +26,10 @@ def populate_wood_materials():
         reader = csv.DictReader(f)
         for row in reader:
             wood = Wood(
-                species=row['Species'],
-                grade=row['Grade'],
+                name=str(row['name']),
+                category=str(row['category']),
+                species=str(row['Species']),
+                grade=str(row['Grade']),
                 fb=float(row['fb']),
                 fv=float(row['fv']),
                 fc=float(row['fc']),
@@ -33,7 +37,7 @@ def populate_wood_materials():
                 ft=float(row['ft']),
                 E=float(row['E']),
                 E05=float(row['E05']),
-                material_type=row['Type']
+                material_type=str(row['material_type'])
             )
             db.add(wood)
     db.commit()
@@ -106,6 +110,35 @@ def populate_from_csv():
     db.commit()
     db.close()
 
+def populate_sections_and_studs():
+    """Populates the sections and studs tables with some default values."""
+    db = LibrarySessionLocal()
+
+    materials = {m.name: m for m in db.query(Wood).all()}
+    if not materials:
+        print("No wood materials found in the database. Cannot create studs.")
+        return
+
+    stud_data = [
+        {"name": "2x4 SPF No.1/No.2", "width": 38.1, "depth": 88.9, "plys": 1, "material_name": "SPF No1/No2"},
+        {"name": "2x6 SPF No.1/No.2", "width": 38.1, "depth": 139.7, "plys": 1, "material_name": "SPF No1/No2"},
+        {"name": "2x8 SPF No.1/No.2", "width": 38.1, "depth": 184.15, "plys": 1, "material_name": "SPF No1/No2"},
+        {"name": "2-2x4 SPF No.1/No.2", "width": 38.1, "depth": 88.9, "plys": 2, "material_name": "SPF No1/No2"},
+        {"name": "2-2x6 SPF No.1/No.2", "width": 38.1, "depth": 139.7, "plys": 2, "material_name": "SPF No1/No2"},
+        {"name": "2-2x8 SPF No.1/No.2", "width": 38.1, "depth": 184.15, "plys": 2, "material_name": "SPF No1/No2"},
+    ]
+
+    for data in stud_data:
+        section = Section(width=data["width"], depth=data["depth"], plys=data["plys"])
+        stud = Stud(
+            name=data["name"],
+            section=section,
+            material=materials[data["material_name"]]
+        )
+        db.add(stud)
+    
+    db.commit()
+    db.close()
 
 if __name__ == "__main__":
     print("Creating library database...")
@@ -117,4 +150,6 @@ if __name__ == "__main__":
     populate_wood_materials()
     print("Populating from CSV...")
     populate_from_csv()
+    print("Populating sections and studs...")
+    populate_sections_and_studs()
     print("Library database created successfully.")

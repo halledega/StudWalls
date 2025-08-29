@@ -54,6 +54,8 @@ class Ui_MainWindow(object):
         self.actionAnalze_and_Code_Check.setObjectName(u"actionAnalze_and_Code_Check")
         self.actionWalls = QAction(MainWindow)
         self.actionWalls.setObjectName(u"actionWalls")
+        self.actionAbout = QAction(MainWindow)
+        self.actionAbout.setObjectName(u"actionAbout")
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_3 = QHBoxLayout(self.centralwidget)
@@ -265,10 +267,11 @@ class Ui_MainWindow(object):
         self.menuDefine.addAction(self.actionStuds)
         self.menuDefine.addAction(self.actionWalls)
         self.menuRun.addAction(self.actionAnalze_and_Code_Check)
+        self.menuHelp.addAction(self.actionAbout)
 
         self.retranslateUi(MainWindow)
 
-        self.main_tabWidget.setCurrentIndex(1)
+        self.main_tabWidget.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -289,6 +292,7 @@ class Ui_MainWindow(object):
         self.actionLevels.setText(QCoreApplication.translate("MainWindow", u"Levels", None))
         self.actionAnalze_and_Code_Check.setText(QCoreApplication.translate("MainWindow", u"Analze and Code Check", None))
         self.actionWalls.setText(QCoreApplication.translate("MainWindow", u"Walls", None))
+        self.actionAbout.setText(QCoreApplication.translate("MainWindow", u"About", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
         self.menuEdit.setTitle(QCoreApplication.translate("MainWindow", u"Edit", None))
         self.menuDefine.setTitle(QCoreApplication.translate("MainWindow", u"Define", None))

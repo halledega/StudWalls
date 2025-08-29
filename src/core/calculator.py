@@ -2,15 +2,17 @@ import csv
 from pathlib import Path
 
 import pandas as pd
-from rich import print
-from rich.pretty import pprint
-from rich.progress import Progress
+
+
+from sqlalchemy.orm import joinedload
+
 
 """
 This module defines the main StudWallCalculator class for performing
 stud wall design calculations.
 """
 from ..models.loads import Load
+from ..models.stud import Stud
 from ..models.section import Section
 from ..models.wood import Wood
 from ..models.O86 import O86_20
@@ -40,7 +42,7 @@ class StudWallCalculator:
         A dictionary storing the final DesignResult object for each floor level.
     """
 
-    def __init__(self, units: Units = Units.Imperial, wall: 'Wall' = None):
+    def __init__(self, units: Units = Units.Imperial, wall: 'Wall' = None, db_session=None):
         """
         Initializes the StudWallCalculator.
 
@@ -54,61 +56,58 @@ class StudWallCalculator:
             Units.Imperial.
         wall : Wall, optional
             The wall object to be analyzed.
+        db_session : Session, optional
+            The database session to be used by the calculator.
         """
         self.units = units
         self.unit_system = UnitSystem(units)
         self._o86 = O86_20
         self.final_results = {}
         self.wall = wall
+        self.db_session = db_session
 
-        self._materials = self._load_materials()
         self._studs = self._initialize_studs()
         self._spacings = [406, 305, 203]  # Corresponds to 16", 12", 8"
-
-    def _load_materials(self):
-        """
-        Load wood material properties from the database.
-        """
-        db = next(get_library_db())
-        materials = {m.species + " " + m.grade: m for m in db.query(Wood).all()}
-        db.close()
-        return materials
 
     def _initialize_studs(self):
         """
         Initializes a list of stud Section objects for common lumber sizes.
         """
-        return [
-            Section(width=38, depth=89, material=self._materials['Spruce-Pine-Fir No1/No2']),
-            Section(width=38, depth=140, material=self._materials['Spruce-Pine-Fir No1/No2']),
-            Section(width=38, depth=184, material=self._materials['Spruce-Pine-Fir No1/No2']),
-        ]
+        if not self.db_session:
+            db = next(get_working_db())
+            studs = db.query(Stud).all()
+            db.close()
+            return studs
+        return self.db_session.query(Stud).options(
+            joinedload(Stud.section),
+            joinedload(Stud.material)
+        ).all()
+
 
     def _calculate_loads(self):
         """
         Calculate and accumulate unfactored loads for all floors.
         """
         floors = {}
+        num_stories = len(self.wall.stories)
         for i, wall_story in enumerate(self.wall.stories):
             all_loads_for_story = wall_story.loads_left + wall_story.loads_right
 
-            dead_kpa = sum(load.value for load in all_loads_for_story if load.case == 'dead')
-            live_kpa = sum(load.value for load in all_loads_for_story if load.case == 'live')
-            snow_kpa = sum(load.value for load in all_loads_for_story if load.case == 'snow')
-            partition_kpa = sum(load.value for load in all_loads_for_story if load.case == 'partition')
+            dead_kpa = sum(load.value for load in all_loads_for_story if load.case.lower() == 'dead')
+            live_kpa = sum(load.value for load in all_loads_for_story if load.case.lower() == 'live')
+            snow_kpa = sum(load.value for load in all_loads_for_story if load.case.lower() == 'snow')
+            partition_kpa = sum(load.value for load in all_loads_for_story if load.case.lower() == 'partition')
 
             total_trib = self.wall.tribs[i][0] + self.wall.tribs[i][1]
-
             if i == 0:  # Top floor (roof)
-                dl = (dead_kpa * (total_trib / 1000) + self.wall.sw)
-                ll = 0
-                sl = snow_kpa * (total_trib / 1000)
+                dl = (dead_kpa * (total_trib / 1000)) + self.wall.sw
             else:  # Typical floor
                 dl = (dead_kpa + partition_kpa) * (total_trib / 1000) + self.wall.sw
-                ll = live_kpa * (total_trib / 1000)
-                sl = 0
 
-            floors[len(self.wall.stories) - i] = {'DL': dl, 'LL': ll, 'SL': sl}
+            ll = live_kpa * (total_trib / 1000)
+            sl = snow_kpa * (total_trib / 1000)
+
+            floors[num_stories - i] = {'DL': dl, 'LL': ll, 'SL': sl}
 
         floor_df = pd.DataFrame(floors).transpose()
         return floor_df.cumsum()
@@ -126,7 +125,7 @@ class StudWallCalculator:
         }
         return pd.DataFrame(combo_dict)
 
-    def _size_stud(self, stud, duration, pl, ps):
+    def _size_stud(self, section, material, duration, pl, ps):
         """
         Calculates the factored axial compressive resistance (Pr) of a single stud.
         """
@@ -138,23 +137,26 @@ class StudWallCalculator:
             "Kt": 1.0,
         }
         pr_calcs = {
-            'width': self._o86.CL6_5_6_2_3(stud, stud.lu_width, **k_factors),
-            'depth': self._o86.CL6_5_6_2_3(stud, stud.lu_depth, **k_factors),
+            'width': self._o86.CL6_5_6_2_3(section, material, section.lu_width, **k_factors),
+            'depth': self._o86.CL6_5_6_2_3(section, material, section.lu_depth, **k_factors),
         }
         return pr_calcs, k_factors
 
     def calculate(self):
         """
-        Performs the main stud wall design calculation and prints the results.
+        Performs the main stud wall design calculation and returns the results as formatted strings.
         """
         self.final_results = {}
+        summary_output = ""
+        detailed_output = ""
+
         loads_df = self._calculate_loads()
-        print("\n[bold blue]Unfactored Total Loads per floor[/bold blue]")
-        pprint(loads_df)
+        detailed_output += "\nUnfactored Total Loads per floor\n"
+        detailed_output += loads_df.to_string() + "\n"
 
         combo_df = self._calculate_load_combinations(loads_df)
-        print("\n[bold blue]Factored Loads Combos per floor[/bold blue]")
-        pprint(combo_df)
+        detailed_output += "\nFactored Loads Combos per floor\n"
+        detailed_output += combo_df.to_string() + "\n"
 
         for level, wall_story in enumerate(self.wall.stories):
             h = wall_story.story.height
@@ -162,63 +164,58 @@ class StudWallCalculator:
             load_combo_dict = combo_df.loc[level + 1].to_dict()
 
             all_solutions_for_level = []
-            num_combinations = len(self._studs) * len(self._spacings) * 3
 
-            with Progress() as progress:
-                task = progress.add_task(f"[bold red]Processing Level {level + 1}...[/bold red]", total=num_combinations)
-                for stud_template in self._studs:
-                    for spacing in self._spacings:
-                        for plys in range(1, 4):
-                            progress.update(task, advance=1)
-                            stud = Section(
-                                width=stud_template.width,
-                                depth=stud_template.depth,
-                                material=stud_template.material,
-                                plys=plys,
-                                lu_width=self.wall.lu[level][0],
-                                lu_depth=self.wall.lu[level][1]
-                            )
+            for stud_template in self._studs:
+                for spacing in self._spacings:
+                    for plys in range(1, 4):
+                        section = Section(
+                            width=stud_template.section.width,
+                            depth=stud_template.section.depth,
+                            plys=plys,
+                            lu_width=self.wall.lu[level][0],
+                            lu_depth=self.wall.lu[level][1]
+                        )
 
-                            governing_result_for_design = DesignResult(level=level, story=wall_story.story, stud=stud, spacing=spacing, plys=plys)
-                            max_dc_ratio = 0
-                            governing_combo = None
+                        governing_result_for_design = DesignResult(level=level, story=wall_story.story, stud=stud_template, spacing=spacing, plys=plys)
+                        max_dc_ratio = 0
+                        governing_combo = None
 
-                            for combo, load in load_combo_dict.items():
-                                if combo == '1.4DL':
-                                    duration, long, short = 'Long', 0, 0
-                                elif combo == '1.25DL+1.5LL+1.0SL':
-                                    duration, long, short = 'Standard', load_dict['DL'], load_dict['LL'] + 0.5 * load_dict['SL']
-                                elif combo == '1.25DL+1.5SL+1.0LL':
-                                    duration, long, short = 'Standard', load_dict['DL'], load_dict['SL'] + 0.5 * load_dict['LL']
-                                elif combo == '1.25DL+1.5LL':
-                                    duration, long, short = 'Standard', load_dict['DL'], load_dict['LL']
-                                elif combo == '1.25DL+1.5SL':
-                                    duration, long, short = 'Standard', load_dict['DL'], load_dict['SL']
+                        for combo, load in load_combo_dict.items():
+                            if combo == '1.4DL':
+                                duration, long, short = 'Long', 0, 0
+                            elif combo == '1.25DL+1.5LL+1.0SL':
+                                duration, long, short = 'Standard', load_dict['DL'], load_dict['LL'] + 0.5 * load_dict['SL']
+                            elif combo == '1.25DL+1.5SL+1.0LL':
+                                duration, long, short = 'Standard', load_dict['DL'], load_dict['SL'] + 0.5 * load_dict['LL']
+                            elif combo == '1.25DL+1.5LL':
+                                duration, long, short = 'Standard', load_dict['DL'], load_dict['LL']
+                            elif combo == '1.25DL+1.5SL':
+                                duration, long, short = 'Standard', load_dict['DL'], load_dict['SL']
 
-                                pf = load * (spacing / 1000)
-                                pl = long * (spacing / 1000)
-                                ps = short * (spacing / 1000)
+                            pf = load * (spacing / 1000)
+                            pl = long * (spacing / 1000)
+                            ps = short * (spacing / 1000)
 
-                                pr_calcs, k_factors = self._size_stud(stud, duration, pl, ps)
-                                pr = min(pr_calcs['width']['Pr'], pr_calcs['depth']['Pr']) / 1000
-                                dc = pf / pr if pr > 0 else float('inf')
+                            pr_calcs, k_factors = self._size_stud(section, stud_template.material, duration, pl, ps)
+                            pr = min(pr_calcs['width']['Pr'], pr_calcs['depth']['Pr']) / 1000
+                            dc = pf / pr if pr > 0 else float('inf')
 
-                                if dc > max_dc_ratio:
-                                    max_dc_ratio = dc
-                                    governing_combo = combo
-                                    governing_result_for_design.Pf = pf
-                                    governing_result_for_design.Pr = pr
-                                    governing_result_for_design.k_factors = k_factors
+                            if dc > max_dc_ratio:
+                                max_dc_ratio = dc
+                                governing_combo = combo
+                                governing_result_for_design.Pf = pf
+                                governing_result_for_design.Pr = pr
+                                governing_result_for_design.k_factors = k_factors
 
-                            governing_result_for_design.dc_ratio = max_dc_ratio
-                            governing_result_for_design.governing_combo = governing_combo
-                            governing_result_for_design.wood_volume = stud.area / spacing
-                            all_solutions_for_level.append(governing_result_for_design)
+                        governing_result_for_design.dc_ratio = max_dc_ratio
+                        governing_result_for_design.governing_combo = governing_combo
+                        governing_result_for_design.wood_volume = section.Ag / spacing
+                        all_solutions_for_level.append(governing_result_for_design)
 
-            print("---------------------------------------------------------")
-            print(f"[bold cyan]All Design Options for Level {level + 1}[/bold cyan]")
+            detailed_output += "\n---------------------------------------------------------\n"
+            detailed_output += f"All Design Options for Level {level + 1}\n"
 
-            all_solutions_for_level.sort(key=lambda x: (x.stud.depth, x.plys, x.spacing))
+            all_solutions_for_level.sort(key=lambda x: (x.stud.section.depth, x.plys, x.spacing))
 
             summary_list = []
             for result in all_solutions_for_level:
@@ -233,12 +230,13 @@ class StudWallCalculator:
                     "Status": status
                 })
             summary_df = pd.DataFrame(summary_list)
-            pprint(summary_df)
+            detailed_output += summary_df.to_string() + "\n"
 
             valid_solutions = [s for s in all_solutions_for_level if s.dc_ratio < 1.0]
 
             if not valid_solutions:
-                print("\n[bold yellow]No adequate design found.[/bold yellow]")
+                summary_output += f"Level {level + 1}: No adequate design found.\n"
+                detailed_output += "\nNo adequate design found.\n"
                 self.final_results[level] = DesignResult(level=level, story=wall_story.story, stud=None)
             else:
                 optimal_solution = sorted(valid_solutions, key=lambda x: x.wood_volume)[0]
@@ -249,6 +247,11 @@ class StudWallCalculator:
                 display_pf = self.unit_system.from_metric(optimal_solution.Pf, 'load')
                 display_pr = self.unit_system.from_metric(optimal_solution.Pr, 'load')
                 load_unit = self.unit_system.get_display_unit('load')
+
+                summary_output += f"--- Level {level + 1} ---\n"
+                summary_output += f"  Stud: ({optimal_solution.plys})-{optimal_solution.stud.name}\n"
+                summary_output += f"  Spacing: {display_spacing:.0f} {spacing_unit} o/c\n"
+                summary_output += f"  DC Ratio: {optimal_solution.dc_ratio:.2f}\n\n"
 
                 final_data = {
                     "Parameter": [
@@ -269,11 +272,13 @@ class StudWallCalculator:
                 }
                 final_df = pd.DataFrame(final_data).set_index('Parameter')
 
-                print("\n---------------------------------------------------------")
-                print(f"[bold red]Final (Optimal) Design for Level {level + 1}[/bold red]")
-                pprint(final_df)
+                detailed_output += "\n---------------------------------------------------------\n"
+                detailed_output += f"Final (Optimal) Design for Level {level + 1}\n"
+                detailed_output += final_df.to_string() + "\n"
 
-            print("---------------------------------------------------------\n")
+            detailed_output += "---------------------------------------------------------\n\n"
+
+        return summary_output, detailed_output
 
     def get_results(self):
         return self.final_results

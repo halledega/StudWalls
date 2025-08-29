@@ -17,6 +17,7 @@ from src.core.units import Units
 from src.core.calculator import StudWallCalculator
 # UI Imports
 from src.ui.main_window.main_window import Ui_MainWindow, MainWindow
+from src import models
 
 
 def run_calculator_cli():

@@ -21,6 +21,10 @@ from src.models.wall import Wall
 
 from src.ui.stories_dialog.stories_dialog import StoriesDialog
 from src.ui.walls_dialog.walls_dialog import WallsDialog
+from src.ui.about_dialog.about_dialog import AboutDialog
+from src.ui.loads_dialog.loads_dialog import LoadsDialog
+from src.ui.materials_dialog.materials_dialog import MaterialsDialog
+from src.ui.studs_dialog.studs_dialog import StudsDialog
 
 
 class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
@@ -31,12 +35,12 @@ class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
         # Set up the UI elements from the loaded UI file
         self.setupUi(self)
 
-        # Initialize the calculator with Metric as default
-        self.units = Units.Metric
-        self.calculator = StudWallCalculator(self.units)
-
         # Perform startup tasks (e.g., loading defaults or preparing the environment)
         self.start_up()
+
+        # Initialize the calculator with Metric as default
+        self.units = Units.Metric
+        self.calculator = StudWallCalculator(self.units, db_session=self.db_session)
 
         # Connect menu actions to their corresponding slots
         self.connect_actions()
@@ -108,8 +112,12 @@ class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
         self.actionNew.triggered.connect(self.new_project)
         self.actionLevels.triggered.connect(self.show_stories_dialog)
         self.actionWalls.triggered.connect(self.edit_wall)
+        self.actionLoads.triggered.connect(self.show_loads_dialog)
+        self.actionMaterials.triggered.connect(self.show_materials_dialog)
+        self.actionStuds.triggered.connect(self.show_studs_dialog)
         self.actionClose.triggered.connect(self.close)
         self.actionAnalze_and_Code_Check.triggered.connect(self.run_calculation)
+        self.actionAbout.triggered.connect(self.show_about_dialog)
 
         # Add delete action to Edit menu
         self.delete_wall_action = QAction("Delete Wall", self)
@@ -145,14 +153,10 @@ class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
 
         wall = self.db_session.query(Wall).filter_by(name=current_wall_name).first()
         if wall:
-            print("Calculating...")
             self.calculator.wall = wall
-            self.calculator.calculate()
-            results = self.calculator.get_results()
-            print(f"Results: {results}")
-            formatted_results = self.format_results(results)
-            print(f"Formatted results: {formatted_results}")
-            self.result_summary_textEdit.setText(formatted_results)
+            summary_output, detailed_output = self.calculator.calculate()
+            self.result_summary_textEdit.setText(summary_output)
+            self.result_detailed_textEdit.setText(detailed_output)
 
     def show_stories_dialog(self):
         """Opens the dialog to edit all project stories."""
@@ -160,6 +164,20 @@ class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
         dialog = StoriesDialog(self.db_session, used_story_names)
         dialog.exec()
 
+    def show_loads_dialog(self):
+        """Opens the dialog to edit all project loads."""
+        dialog = LoadsDialog(self.db_session)
+        dialog.exec()
+
+    def show_materials_dialog(self):
+        """Opens the dialog to edit all project materials."""
+        dialog = MaterialsDialog(self.db_session)
+        dialog.exec()
+
+    def show_studs_dialog(self):
+        """Opens the dialog to edit all project studs."""
+        dialog = StudsDialog(self.db_session)
+        dialog.exec()
 
     def edit_wall(self):
         """Opens the editor dialog for the currently selected wall."""
@@ -174,25 +192,7 @@ class MainWindow(Qtw.QMainWindow, Ui_MainWindow):
             if dialog.exec():
                 self.update_wall_comboBox()
 
-
-    def format_results(self, results):
-        """
-        Formats the results dictionary into a user-friendly string.
-        """
-        if not results:
-            return "No results to display."
-
-        output = ""
-        for level, result in results.items():
-            output += f"--- {result.story.name} ---\n"
-            if result.stud:
-                display_spacing = self.calculator.unit_system.from_metric(result.spacing, 'length_in_mm')
-                spacing_unit = self.calculator.unit_system.get_display_unit('length_in_mm')
-                output += f"  Stud: ({result.plys}) {result.stud.name}\n"
-                output += f"  Spacing: {display_spacing:.0f} {spacing_unit} o/c\n"
-                output += f"  DC Ratio: {result.dc_ratio:.2f}\n"
-                output += f"  Governing Combo: {result.governing_combo}\n"
-            else:
-                output += "  No adequate design found.\n"
-            output += "\n"
-        return output
+    def show_about_dialog(self):
+        """Shows the about dialog."""
+        dialog = AboutDialog()
+        dialog.exec()
