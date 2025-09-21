@@ -25,9 +25,8 @@ class Ui_walls_Dialog(object):
     def setupUi(self, walls_Dialog):
         if not walls_Dialog.objectName():
             walls_Dialog.setObjectName(u"walls_Dialog")
-        walls_Dialog.resize(640, 480)
-        walls_Dialog.setMinimumSize(QSize(640, 480))
-        walls_Dialog.setMaximumSize(QSize(640, 640))
+        walls_Dialog.resize(800, 600)
+        walls_Dialog.setMinimumSize(QSize(800, 600))
         self.gridLayout = QGridLayout(walls_Dialog)
         self.gridLayout.setObjectName(u"gridLayout")
         self.groupBox_3 = QGroupBox(walls_Dialog)
@@ -108,28 +107,29 @@ class Ui_walls_Dialog(object):
         self.horizontalLayout_2.addWidget(self.right_loads_listView)
 
 
-        self.gridLayout.addWidget(self.groupBox_3, 4, 0, 1, 2)
-
-        self.cancel_pushButton = QPushButton(walls_Dialog)
-        self.cancel_pushButton.setObjectName(u"cancel_pushButton")
-
-        self.gridLayout.addWidget(self.cancel_pushButton, 6, 1, 1, 1)
+        self.gridLayout.addWidget(self.groupBox_3, 4, 0, 1, 4)
 
         self.groupBox = QGroupBox(walls_Dialog)
         self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setMinimumSize(QSize(322, 0))
+        self.groupBox.setMinimumSize(QSize(250, 0))
+        self.groupBox.setMaximumSize(QSize(250, 16777215))
         self.gridLayout_2 = QGridLayout(self.groupBox)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
-        self.label = QLabel(self.groupBox)
-        self.label.setObjectName(u"label")
-
-        self.gridLayout_2.addWidget(self.label, 0, 0, 1, 1)
-
         self.bottom_story_comboBox = QComboBox(self.groupBox)
         self.bottom_story_comboBox.setObjectName(u"bottom_story_comboBox")
         self.bottom_story_comboBox.setMinimumSize(QSize(0, 0))
 
         self.gridLayout_2.addWidget(self.bottom_story_comboBox, 2, 1, 1, 4)
+
+        self.label_2 = QLabel(self.groupBox)
+        self.label_2.setObjectName(u"label_2")
+
+        self.gridLayout_2.addWidget(self.label_2, 2, 0, 1, 1)
+
+        self.wall_height_label = QLabel(self.groupBox)
+        self.wall_height_label.setObjectName(u"wall_height_label")
+
+        self.gridLayout_2.addWidget(self.wall_height_label, 5, 1, 1, 1)
 
         self.top_story_comboBox = QComboBox(self.groupBox)
         self.top_story_comboBox.setObjectName(u"top_story_comboBox")
@@ -137,10 +137,15 @@ class Ui_walls_Dialog(object):
 
         self.gridLayout_2.addWidget(self.top_story_comboBox, 3, 1, 1, 4)
 
-        self.label_2 = QLabel(self.groupBox)
-        self.label_2.setObjectName(u"label_2")
+        self.label_3 = QLabel(self.groupBox)
+        self.label_3.setObjectName(u"label_3")
 
-        self.gridLayout_2.addWidget(self.label_2, 2, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.label_3, 3, 0, 1, 1)
+
+        self.label = QLabel(self.groupBox)
+        self.label.setObjectName(u"label")
+
+        self.gridLayout_2.addWidget(self.label, 0, 0, 1, 1)
 
         self.wall_name_lineEdit = QLineEdit(self.groupBox)
         self.wall_name_lineEdit.setObjectName(u"wall_name_lineEdit")
@@ -154,26 +159,13 @@ class Ui_walls_Dialog(object):
 
         self.gridLayout_2.addWidget(self.n_stoiries_label, 4, 1, 1, 1)
 
-        self.label_3 = QLabel(self.groupBox)
-        self.label_3.setObjectName(u"label_3")
-
-        self.gridLayout_2.addWidget(self.label_3, 3, 0, 1, 1)
-
-        self.wall_height_label = QLabel(self.groupBox)
-        self.wall_height_label.setObjectName(u"wall_height_label")
-
-        self.gridLayout_2.addWidget(self.wall_height_label, 5, 1, 1, 1)
-
 
         self.gridLayout.addWidget(self.groupBox, 1, 0, 1, 1)
 
-        self.ok_pushButton = QPushButton(walls_Dialog)
-        self.ok_pushButton.setObjectName(u"ok_pushButton")
-
-        self.gridLayout.addWidget(self.ok_pushButton, 6, 0, 1, 1)
-
         self.frame_3 = QFrame(walls_Dialog)
         self.frame_3.setObjectName(u"frame_3")
+        self.frame_3.setMinimumSize(QSize(250, 0))
+        self.frame_3.setMaximumSize(QSize(250, 16777215))
         self.frame_3.setFrameShape(QFrame.Shape.StyledPanel)
         self.frame_3.setFrameShadow(QFrame.Shadow.Raised)
         self.horizontalLayout_4 = QHBoxLayout(self.frame_3)
@@ -191,6 +183,20 @@ class Ui_walls_Dialog(object):
 
         self.gridLayout.addWidget(self.frame_3, 2, 0, 1, 1)
 
+        self.cancel_pushButton = QPushButton(walls_Dialog)
+        self.cancel_pushButton.setObjectName(u"cancel_pushButton")
+
+        self.gridLayout.addWidget(self.cancel_pushButton, 6, 3, 1, 1)
+
+        self.ok_pushButton = QPushButton(walls_Dialog)
+        self.ok_pushButton.setObjectName(u"ok_pushButton")
+
+        self.gridLayout.addWidget(self.ok_pushButton, 6, 2, 1, 1)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.gridLayout.addItem(self.horizontalSpacer, 6, 0, 1, 2)
+
         self.groupBox_2 = QGroupBox(walls_Dialog)
         self.groupBox_2.setObjectName(u"groupBox_2")
         self.groupBox_2.setMaximumSize(QSize(16777215, 16777215))
@@ -198,11 +204,14 @@ class Ui_walls_Dialog(object):
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.tribs_tableView = QTableView(self.groupBox_2)
         self.tribs_tableView.setObjectName(u"tribs_tableView")
+        self.tribs_tableView.horizontalHeader().setCascadingSectionResizes(False)
+        self.tribs_tableView.horizontalHeader().setStretchLastSection(True)
+        self.tribs_tableView.verticalHeader().setVisible(False)
 
         self.horizontalLayout.addWidget(self.tribs_tableView)
 
 
-        self.gridLayout.addWidget(self.groupBox_2, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.groupBox_2, 1, 1, 2, 3)
 
 
         self.retranslateUi(walls_Dialog)
@@ -217,15 +226,15 @@ class Ui_walls_Dialog(object):
         self.delete_loads_left_pushButton.setText(QCoreApplication.translate("walls_Dialog", u">", None))
         self.add_loads_right_pushButton.setText(QCoreApplication.translate("walls_Dialog", u">", None))
         self.delete_loads_right_pushButton.setText(QCoreApplication.translate("walls_Dialog", u"<", None))
-        self.cancel_pushButton.setText(QCoreApplication.translate("walls_Dialog", u"Cancel", None))
         self.groupBox.setTitle(QCoreApplication.translate("walls_Dialog", u"Wall Info", None))
-        self.label.setText(QCoreApplication.translate("walls_Dialog", u"Wall Name:", None))
         self.label_2.setText(QCoreApplication.translate("walls_Dialog", u"Bottom Story:", None))
-        self.n_stoiries_label.setText(QCoreApplication.translate("walls_Dialog", u"TextLabel", None))
-        self.label_3.setText(QCoreApplication.translate("walls_Dialog", u"Top Story:", None))
         self.wall_height_label.setText(QCoreApplication.translate("walls_Dialog", u"TextLabel", None))
+        self.label_3.setText(QCoreApplication.translate("walls_Dialog", u"Top Story:", None))
+        self.label.setText(QCoreApplication.translate("walls_Dialog", u"Wall Name:", None))
+        self.n_stoiries_label.setText(QCoreApplication.translate("walls_Dialog", u"TextLabel", None))
+        self.label_4.setText(QCoreApplication.translate("walls_Dialog", u"Story Loads:", None))
+        self.cancel_pushButton.setText(QCoreApplication.translate("walls_Dialog", u"Cancel", None))
         self.ok_pushButton.setText(QCoreApplication.translate("walls_Dialog", u"OK", None))
-        self.label_4.setText(QCoreApplication.translate("walls_Dialog", u"Select Story To Edit Loads:", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("walls_Dialog", u"Tributary Widths", None))
     # retranslateUi
 

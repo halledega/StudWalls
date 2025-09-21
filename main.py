@@ -1,43 +1,35 @@
 """
-This script serves as the main entry point for running the stud wall calculator.
+This script serves as the main entry point for the StudWalls application.
 
-It demonstrates how to initialize the calculator, define input parameters,
-and run the design calculations. Users can modify the inputs in this file
-to analyze their specific wall configurations.
+It can be run in two modes:
+1.  GUI Mode (default): Launches the PySide6 graphical user interface.
+2.  CLI Mode: Runs a predefined design calculation directly in the console.
+    (This is useful for testing the calculation engine).
 """
-# Import system
+
 import sys
-# Python Imports
-# PySide6 Imports
-from PySide6 import QtCore as Qtc
 from PySide6 import QtWidgets as Qtw
-from PySide6 import QtGui as Qtgui
+
 # StudWall Imports
 from src.core.units import Units
 from src.core.calculator import StudWallCalculator
-# UI Imports
-from src.ui.main_window.main_window import Ui_MainWindow, MainWindow
-from src import models
-
+from src.ui.main_window.main_window import MainWindow
 
 def run_calculator_cli():
     """
-    Initializes and runs the stud wall design calculation in CLI mode.
+    Initializes and runs the stud wall design calculation in Command Line Interface (CLI) mode.
 
-    This function sets the desired unit system, defines all necessary physical
-    and loading parameters, passes them to the StudWallCalculator, and
-n    initiates the calculation process.
+    This function is intended for development and testing purposes. It sets up a
+    pre-defined wall configuration and runs the calculation, printing the results
+    to the console without launching the GUI.
     """
     # --- CHOOSE YOUR UNIT SYSTEM HERE ---
-    # units = Units.Metric
     units = Units.Imperial
 
     # Initialize calculator with the chosen unit system
     calculator = StudWallCalculator(units)
 
     # --- DEFINE YOUR INPUTS HERE (in the chosen unit system) ---
-    # If using Imperial, inputs are in ft, psf, etc.
-    # If using Metric, inputs are in m, kPa, etc.
     inputs = {
         "wall_heights": [9, 10, 10, 10, 10, 12],  # ft or m
         "roof_dead": 22,  # psf or kPa
@@ -58,16 +50,22 @@ n    initiates the calculation process.
 
 def main():
     """
-    Initializes and runs the stud wall calculator GUI.
+    Initializes and runs the StudWalls Graphical User Interface (GUI).
+    
+    This is the primary entry point for the application.
     """
-    # Create new QApplication instance
+    # A QApplication instance is required for any PySide6 GUI application.
+    # It manages application-wide resources and the event loop.
     app = Qtw.QApplication(sys.argv)
-    # Create window object (could also be a widget)
+    
+    # Create the main window object.
     window = MainWindow()
-    # Handle application shutdown
+    
+    # Start the application's event loop. The application will exit when the main window is closed.
     sys.exit(app.exec())
 
 
 if __name__ == "__main__":
+    # This standard Python construct ensures that the `main()` function is called
+    # only when the script is executed directly (not when it's imported as a module).
     main()
-

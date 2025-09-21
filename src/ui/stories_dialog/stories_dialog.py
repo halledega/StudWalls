@@ -1,20 +1,24 @@
-# Import system
-import sys
-import copy
-# Python Imports
-# PySide6 Imports
-from PySide6 import QtCore as Qtc, QtWidgets
-from PySide6 import QtWidgets as Qtw
-from PySide6 import QtGui as Qtgui
-# UI Imports
+"""
+This module contains the logic for the Stories dialog window.
+"""
+
+from PySide6 import QtCore as Qtc, QtWidgets as Qtw
 from src.ui.stories_dialog.stories_ui.story_dialog import Ui_stories_Dialog
-# StudWall Imports
-from src.core.units import Units, UnitSystem
 from src.models.story import Story
 
-
-class StoriesDialog(QtWidgets.QDialog, Ui_stories_Dialog):
+class StoriesDialog(Qtw.QDialog, Ui_stories_Dialog):
+    """
+    Manages the user interface for creating, editing, and deleting stories (levels).
+    """
     def __init__(self, db_session, used_story_names: set):
+        """
+        Initializes the StoriesDialog.
+
+        Args:
+            db_session: The SQLAlchemy session for database interaction.
+            used_story_names (set): A set of story names that are currently in use by walls.
+                                    This is used to prevent deletion of stories that are in use.
+        """
         super().__init__()
         self.setupUi(self)
         self.db_session = db_session
@@ -27,13 +31,19 @@ class StoriesDialog(QtWidgets.QDialog, Ui_stories_Dialog):
         self.delete_level_pushButton.clicked.connect(self.delete_level)
 
     def setup_table(self):
+        """Initializes and sets the custom table model for the stories view."""
         self.levels_tableView.setModel(StoryTableModel(self.db_session))
+        self.levels_tableView.verticalHeader().hide()
+        header = self.levels_tableView.horizontalHeader()
+        header.setSectionResizeMode(Qtw.QHeaderView.ResizeMode.Stretch)
 
     def add_level(self):
+        """Adds a new story to the table and database."""
         model = self.levels_tableView.model()
         model.insertRow(model.rowCount())
 
     def delete_level(self):
+        """Deletes the selected story, with a check to prevent deletion of stories in use."""
         model = self.levels_tableView.model()
         selected_row = self.levels_tableView.currentIndex().row()
         if selected_row < 0:
@@ -52,6 +62,9 @@ class StoriesDialog(QtWidgets.QDialog, Ui_stories_Dialog):
 
 
 class StoryTableModel(Qtc.QAbstractTableModel):
+    """
+    A custom table model for managing Story objects.
+    """
     def __init__(self, db_session):
         super().__init__()
         self.db_session = db_session

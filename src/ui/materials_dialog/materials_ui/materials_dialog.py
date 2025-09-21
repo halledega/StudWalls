@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'materials_dialog.ui'
+## Form generated from reading UI file 'materials_dialog.load_combos_ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##

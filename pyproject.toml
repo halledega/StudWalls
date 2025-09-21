@@ -11,3 +11,6 @@ dependencies = [
     "rich>=14.0.0",
     "sqlalchemy>=2.0.43",
 ]
+
+[project.gui-scripts]
+studwalls = "main:main"

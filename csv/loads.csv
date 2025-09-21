@@ -1,7 +1,7 @@
 "id","name","case","value","load_type"
 1,Roof Dead,Dead,0.75,Area
-2,Roof Live,Roof Live,1.0,Area
-3,Snow,Dead,2.0,Area
+2,Roof Live,Live,1.0,Area
+3,Snow,Snow,2.0,Area
 4,Suite Dead,Dead,1.7,Area
 5,Suite Live,Live,2.4,Area
 6,Cooridor Live,Live,4.8,Area

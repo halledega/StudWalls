@@ -1,13 +1,24 @@
+"""
+This module contains the logic for the Materials dialog window.
+"""
+
 from PySide6 import QtCore as Qtc, QtWidgets as Qtw, QtGui as Qtg
 from src.ui.materials_dialog.materials_ui.materials_dialog import Ui_materials_Dialog
 from src.models.wood import Wood
 
 class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
+    """
+    Manages the user interface for creating, editing, and deleting wood materials.
+    """
     def __init__(self, db_session):
-        super().__init__()
-        # Place holder properties
-        self.model = None
+        """
+        Initializes the MaterialsDialog.
 
+        Args:
+            db_session: The SQLAlchemy session for database interaction.
+        """
+        super().__init__()
+        self.model = None
         self.setupUi(self)
         self.db_session = db_session
 
@@ -18,16 +29,17 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
         self.populate_property_combos()
         self.populate_materials_list()
 
-        # Initial state for filters
         self.category_filter_comboBox.setEnabled(self.category_filter_checkBox.isChecked())
         self.species_filter_comboBox.setEnabled(self.species_filter_checkBox.isChecked())
 
     def setup_model(self):
+        """Initializes the QStandardItemModel for the materials list view."""
         self.model = Qtg.QStandardItemModel()
         self.materials_listView.setModel(self.model)
         self.materials_listView.setSelectionMode(Qtw.QAbstractItemView.SelectionMode.SingleSelection)
 
     def setup_connections(self):
+        """Connects widget signals to their corresponding slots."""
         self.save_material_pushButton.clicked.connect(self.save_material)
         self.new_material_pushButton.clicked.connect(self.new_material)
         self.delete_material_pushButton.clicked.connect(self.delete_material)
@@ -35,13 +47,13 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
         self.ok_pushButton.clicked.connect(self.accept)
         self.cancel_pushButton.clicked.connect(self.reject)
 
-        # Filters
         self.category_filter_checkBox.stateChanged.connect(self.filter_materials)
         self.species_filter_checkBox.stateChanged.connect(self.filter_materials)
         self.category_filter_comboBox.currentIndexChanged.connect(self.filter_materials)
         self.species_filter_comboBox.currentIndexChanged.connect(self.filter_materials)
 
     def populate_filters(self):
+        """Populates the filter comboboxes with distinct values from the database."""
         self.category_filter_comboBox.addItem("All")
         categories = [c[0] for c in self.db_session.query(Wood.category).distinct().all() if c[0]]
         self.category_filter_comboBox.addItems(categories)
@@ -51,6 +63,7 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
         self.species_filter_comboBox.addItems(species)
 
     def populate_property_combos(self):
+        """Populates the property comboboxes with distinct values, allowing new entries."""
         categories = [c[0] for c in self.db_session.query(Wood.category).distinct().all() if c[0]]
         self.material_category_comboBox.addItems(categories)
         self.material_category_comboBox.setEditable(True)
@@ -65,6 +78,7 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
         self.material_grade_comboBox.setEditable(True)
 
     def populate_materials_list(self):
+        """Populates the main list view with materials, applying any active filters."""
         self.model.clear()
         query = self.db_session.query(Wood)
 
@@ -85,11 +99,13 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
             self.model.appendRow(item)
 
     def filter_materials(self):
+        """Slot to re-populate the materials list when a filter changes."""
         self.category_filter_comboBox.setEnabled(self.category_filter_checkBox.isChecked())
         self.species_filter_comboBox.setEnabled(self.species_filter_checkBox.isChecked())
         self.populate_materials_list()
 
     def new_material(self):
+        """Clears the input fields to prepare for creating a new material."""
         self.materials_listView.clearSelection()
         self.material_name_lineEdit.clear()
         self.material_category_comboBox.setCurrentIndex(-1)
@@ -105,6 +121,7 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
         self.material_name_lineEdit.setFocus()
 
     def on_material_selected(self, selected, deselected):
+        """Populates the input fields when a material is selected from the list."""
         if selected.indexes():
             item = self.model.itemFromIndex(selected.indexes()[0])
             material_id = item.data(Qtc.Qt.ItemDataRole.UserRole)
@@ -123,6 +140,7 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
                 self.meterial_e_lineEdit.setText(str(material.E05) if material.E05 is not None else "")
 
     def save_material(self):
+        """Saves the current material (new or existing) to the database."""
         name = self.material_name_lineEdit.text().strip()
         if not name:
             Qtw.QMessageBox.warning(self, "Input Error", "Material name cannot be empty.")
@@ -130,24 +148,21 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
 
         selected_indexes = self.materials_listView.selectedIndexes()
         
-        # Check for name uniqueness
         query = self.db_session.query(Wood).filter(Wood.name == name)
-        if selected_indexes: # Editing existing material
+        if selected_indexes:
             item = self.model.itemFromIndex(selected_indexes[0])
             material_id = item.data(Qtc.Qt.ItemDataRole.UserRole)
-            # Exclude the current material from the uniqueness check
             query = query.filter(Wood.id != material_id)
         
         if query.first():
             Qtw.QMessageBox.warning(self, "Input Error", f"A material with the name '{name}' already exists.")
             return
 
-        if selected_indexes: # Editing
+        if selected_indexes:
             material = self.db_session.query(Wood).get(material_id)
-        else: # Creating new
+        else:
             material = Wood()
 
-        # Populate data from UI
         material.name = name
         material.category = self.material_category_comboBox.currentText()
         material.species = self.material_species_comboBox.currentText()
@@ -167,7 +182,6 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
         self.db_session.add(material)
         self.db_session.commit()
 
-        # Repopulate combos to include any new values
         self.material_category_comboBox.clear()
         self.material_species_comboBox.clear()
         self.material_type_comboBox.clear()
@@ -180,7 +194,6 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
 
         self.populate_materials_list()
         
-        # Reselect the saved item
         for row in range(self.model.rowCount()):
             item = self.model.item(row)
             if item.data(Qtc.Qt.ItemDataRole.UserRole) == material.id:
@@ -188,6 +201,7 @@ class MaterialsDialog(Qtw.QDialog, Ui_materials_Dialog):
                 break
 
     def delete_material(self):
+        """Deletes the selected material from the database."""
         selected_indexes = self.materials_listView.selectedIndexes()
         if selected_indexes:
             item = self.model.itemFromIndex(selected_indexes[0])

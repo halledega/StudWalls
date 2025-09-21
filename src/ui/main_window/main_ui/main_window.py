@@ -18,9 +18,10 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QAbstractSpinBox, QApplication, QComboBox, QDateEdit,
     QDockWidget, QFrame, QGraphicsView, QGridLayout,
-    QHBoxLayout, QLabel, QLineEdit, QMainWindow,
-    QMenu, QMenuBar, QPushButton, QSizePolicy,
-    QSpacerItem, QStatusBar, QTabWidget, QTextEdit,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QMainWindow, QMenu, QMenuBar, QPushButton,
+    QSizePolicy, QSpacerItem, QStatusBar, QTabWidget,
+    QTableWidget, QTableWidgetItem, QTextEdit, QVBoxLayout,
     QWidget)
 
 class Ui_MainWindow(object):
@@ -232,13 +233,27 @@ class Ui_MainWindow(object):
         self.main_tabWidget.addTab(self.project_info_tabWidgetPage, "")
         self.results_tabWidgetPage = QWidget()
         self.results_tabWidgetPage.setObjectName(u"results_tabWidgetPage")
-        self.horizontalLayout_2 = QHBoxLayout(self.results_tabWidgetPage)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.result_detailed_textEdit = QTextEdit(self.results_tabWidgetPage)
-        self.result_detailed_textEdit.setObjectName(u"result_detailed_textEdit")
-        self.result_detailed_textEdit.setReadOnly(True)
+        self.verticalLayout_2 = QVBoxLayout(self.results_tabWidgetPage)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.results_tableWidget = QTableWidget(self.results_tabWidgetPage)
+        self.results_tableWidget.setObjectName(u"results_tableWidget")
 
-        self.horizontalLayout_2.addWidget(self.result_detailed_textEdit)
+        self.verticalLayout_2.addWidget(self.results_tableWidget)
+
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.finalize_pushButton = QPushButton(self.results_tabWidgetPage)
+        self.finalize_pushButton.setObjectName(u"finalize_pushButton")
+
+        self.horizontalLayout_4.addWidget(self.finalize_pushButton)
+
+        self.generate_report_pushButton = QPushButton(self.results_tabWidgetPage)
+        self.generate_report_pushButton.setObjectName(u"generate_report_pushButton")
+
+        self.horizontalLayout_4.addWidget(self.generate_report_pushButton)
+
+
+        self.verticalLayout_2.addLayout(self.horizontalLayout_4)
 
         self.main_tabWidget.addTab(self.results_tabWidgetPage, "")
 
@@ -311,6 +326,8 @@ class Ui_MainWindow(object):
         self.run_pushButton.setText(QCoreApplication.translate("MainWindow", u"Run", None))
         self.project_date_dateEdit.setDisplayFormat(QCoreApplication.translate("MainWindow", u"yyyy|mm|dd", None))
         self.main_tabWidget.setTabText(self.main_tabWidget.indexOf(self.project_info_tabWidgetPage), QCoreApplication.translate("MainWindow", u"Project", None))
+        self.finalize_pushButton.setText(QCoreApplication.translate("MainWindow", u"Finalize Results", None))
+        self.generate_report_pushButton.setText(QCoreApplication.translate("MainWindow", u"Generate Report", None))
         self.main_tabWidget.setTabText(self.main_tabWidget.indexOf(self.results_tabWidgetPage), QCoreApplication.translate("MainWindow", u"Results", None))
     # retranslateUi
 

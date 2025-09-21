@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'story_dialog.walls_ui'
+## Form generated from reading UI file 'story_dialog.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.9.1
 ##
@@ -23,13 +23,13 @@ class Ui_stories_Dialog(object):
     def setupUi(self, stories_Dialog):
         if not stories_Dialog.objectName():
             stories_Dialog.setObjectName(u"stories_Dialog")
-        stories_Dialog.resize(640, 480)
-        stories_Dialog.setMinimumSize(QSize(640, 480))
-        stories_Dialog.setMaximumSize(QSize(640, 480))
+        stories_Dialog.resize(800, 480)
         self.gridLayout_2 = QGridLayout(stories_Dialog)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
         self.groupBox = QGroupBox(stories_Dialog)
         self.groupBox.setObjectName(u"groupBox")
+        self.groupBox.setMinimumSize(QSize(400, 0))
+        self.groupBox.setMaximumSize(QSize(400, 16777215))
         self.gridLayout = QGridLayout(self.groupBox)
         self.gridLayout.setObjectName(u"gridLayout")
         self.levels_tableView = QTableView(self.groupBox)
@@ -57,12 +57,16 @@ class Ui_stories_Dialog(object):
         self.pushButton = QPushButton(stories_Dialog)
         self.pushButton.setObjectName(u"pushButton")
 
-        self.gridLayout_2.addWidget(self.pushButton, 1, 2, 1, 1)
+        self.gridLayout_2.addWidget(self.pushButton, 1, 3, 1, 1)
 
         self.pushButton_2 = QPushButton(stories_Dialog)
         self.pushButton_2.setObjectName(u"pushButton_2")
 
-        self.gridLayout_2.addWidget(self.pushButton_2, 1, 3, 1, 1)
+        self.gridLayout_2.addWidget(self.pushButton_2, 1, 4, 1, 1)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.gridLayout_2.addItem(self.horizontalSpacer, 1, 2, 1, 1)
 
         self.groupBox_2 = QGroupBox(stories_Dialog)
         self.groupBox_2.setObjectName(u"groupBox_2")
@@ -74,7 +78,7 @@ class Ui_stories_Dialog(object):
         self.verticalLayout.addWidget(self.graphicsView)
 
 
-        self.gridLayout_2.addWidget(self.groupBox_2, 0, 2, 1, 2)
+        self.gridLayout_2.addWidget(self.groupBox_2, 0, 2, 1, 3)
 
 
         self.retranslateUi(stories_Dialog)

@@ -1,25 +1,28 @@
-# Import system
-import sys
-import json
+"""
+This module contains the logic for the Walls dialog window.
+"""
 
-# Python Imports
-# PySide6 Imports
-from PySide6 import QtCore as Qtc, QtWidgets
-from PySide6 import QtWidgets as Qtw
-from PySide6 import QtGui as Qtgui
+from PySide6 import QtCore as Qtc, QtWidgets as Qtw, QtGui as Qtg
 from PySide6.QtCore import QStringListModel
-
-# UI Imports
 from src.ui.walls_dialog.walls_ui.walls_dialog import Ui_walls_Dialog
-# StudWall Imports
 from src.models.wall import Wall
 from src.models.story import Story
 from src.models.loads import Load
 from src.models.wall_story import WallStory
 
-
-class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
+class WallsDialog(Qtw.QDialog, Ui_walls_Dialog):
+    """
+    Manages the user interface for creating and editing walls.
+    """
     def __init__(self, db_session, wall_id=None, parent=None):
+        """
+        Initializes the WallsDialog.
+
+        Args:
+            db_session: The SQLAlchemy session for database interaction.
+            wall_id (int, optional): The ID of the wall to edit. If None, a new wall is created. Defaults to None.
+            parent (QWidget, optional): The parent widget. Defaults to None.
+        """
         super().__init__()
         self.setupUi(self)
 
@@ -40,9 +43,12 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self._connect_signals()
 
     def _setup_models(self):
-        """Setup table and list models"""
-        self.tribs_model = Qtgui.QStandardItemModel(self)
+        """Initializes the models for the table and list views."""
+        self.tribs_model = Qtg.QStandardItemModel(self)
         self.tribs_tableView.setModel(self.tribs_model)
+        self.tribs_tableView.verticalHeader().hide()
+        header = self.tribs_tableView.horizontalHeader()
+        header.setSectionResizeMode(Qtw.QHeaderView.ResizeMode.Stretch)
 
         self.left_loads_model = QStringListModel(self)
         self.left_loads_listView.setModel(self.left_loads_model)
@@ -52,6 +58,7 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self.loads_listView.setModel(self.available_loads_model)
 
     def _connect_signals(self):
+        """Connects widget signals to their corresponding slots."""
         self.bottom_story_comboBox.currentIndexChanged.connect(self._update_wall_span)
         self.top_story_comboBox.currentIndexChanged.connect(self._update_wall_span)
         self.select_story_comboBox.currentIndexChanged.connect(self._on_load_story_changed)
@@ -65,7 +72,7 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self.cancel_pushButton.clicked.connect(self.reject)
 
     def _load_wall_data(self):
-        """Populate the dialog with the initial wall data."""
+        """Populates the dialog with the initial wall data."""
         self.wall_name_lineEdit.setText(self.wall.name)
 
         for story in self.stories:
@@ -79,8 +86,8 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self._update_wall_span()
 
     def _update_wall_span(self):
-        """Update the dialog display based on the selected top and bottom stories."""
-        self._save_tribs_data() # Save any edits before repopulating
+        """Updates the dialog when the top or bottom story of the wall changes."""
+        self._save_tribs_data()
 
         start_index = self.bottom_story_comboBox.currentIndex()
         end_index = self.top_story_comboBox.currentIndex()
@@ -105,7 +112,6 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         
         self.wall.stories = new_wall_stories
 
-        # Adjust data lists to match story count
         self._adjust_data_lists(num_stories)
 
         self.n_stoiries_label.setText(f"Stories: {num_stories}")
@@ -116,8 +122,7 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self._update_load_story_selector()
 
     def _adjust_data_lists(self, num_stories):
-        """Truncate or extend data lists to match the number of stories."""
-        # Tribs
+        """Ensures data lists (like tribs) match the number of stories."""
         if not self.wall.tribs:
             self.wall.tribs = []
         current_len = len(self.wall.tribs)
@@ -126,7 +131,6 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         else:
             self.wall.tribs = self.wall.tribs[:num_stories]
 
-        # Unsupported Lengths (lu)
         if not self.wall.lu:
             self.wall.lu = []
         current_len = len(self.wall.lu)
@@ -136,20 +140,20 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         else:
             self.wall.lu = self.wall.lu[:num_stories]
 
-
     def _populate_trib_table(self):
+        """Populates the tributary widths table."""
         self.tribs_model.clear()
         self.tribs_model.setHorizontalHeaderLabels(['Story', 'Left Trib (mm)', 'Right Trib (mm)'])
         for i, wall_story in enumerate(self.wall.stories):
             row = [
-                Qtgui.QStandardItem(wall_story.story.name),
-                Qtgui.QStandardItem(str(self.wall.tribs[i][0])),
-                Qtgui.QStandardItem(str(self.wall.tribs[i][1]))
+                Qtg.QStandardItem(wall_story.story.name),
+                Qtg.QStandardItem(str(self.wall.tribs[i][0])),
+                Qtg.QStandardItem(str(self.wall.tribs[i][1]))
             ]
             self.tribs_model.appendRow(row)
 
     def _update_load_story_selector(self):
-        """Update the story selector combobox for loads, and populate loads for the first story."""
+        """Updates the story selector combobox for load assignment."""
         self.select_story_comboBox.blockSignals(True)
         self.select_story_comboBox.clear()
 
@@ -159,12 +163,11 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
 
         self.select_story_comboBox.blockSignals(False)
 
-        # Manually set index and populate for the first time or after wall span changes.
         self.current_load_story_index = self.select_story_comboBox.currentIndex()
         self._populate_load_views()
 
     def _on_load_story_changed(self, index):
-        """Handle user changing the story to edit loads for."""
+        """Handles changing the story for which loads are being edited."""
         if index < 0:
             return
 
@@ -172,8 +175,7 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self._populate_load_views()
 
     def _populate_load_views(self):
-        """Populate the three load list views for the currently selected story."""
-        # Always display all possible loads in the center list
+        """Populates the available and assigned load lists for the current story."""
         self.available_loads_model.setStringList(sorted([l.name for l in self.all_loads]))
 
         if self.current_load_story_index < 0 or self.current_load_story_index >= len(self.wall.stories):
@@ -181,7 +183,6 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
             self.right_loads_model.setStringList([])
             return
 
-        # Get assigned loads for the current story
         wall_story = self.wall.stories[self.current_load_story_index]
         assigned_left_names = [l.name for l in wall_story.loads_left]
         assigned_right_names = [l.name for l in wall_story.loads_right]
@@ -202,6 +203,7 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self._remove_load_from_side('loads_right', self.right_loads_listView)
 
     def _add_load_to_side(self, side):
+        """Adds a selected load to the specified side of the wall for the current story."""
         selection = self.loads_listView.selectedIndexes()
         if not selection:
             return
@@ -220,6 +222,7 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self._populate_load_views()
 
     def _remove_load_from_side(self, side, view):
+        """Removes a selected load from the specified side of the wall."""
         selection = view.selectedIndexes()
         if not selection:
             return
@@ -238,16 +241,18 @@ class WallsDialog(QtWidgets.QDialog, Ui_walls_Dialog):
         self._populate_load_views()
 
     def _save_tribs_data(self):
+        """Saves the tributary width data from the table back to the wall object."""
         if self.tribs_model.rowCount() == 0:
             return
         for i in range(self.tribs_model.rowCount()):
             try:
                 self.wall.tribs[i][0] = float(self.tribs_model.item(i, 1).text())
                 self.wall.tribs[i][1] = float(self.tribs_model.item(i, 2).text())
-            except (ValueError, AttributeError): # Handle empty or non-numeric cells gracefully
+            except (ValueError, AttributeError):
                 pass
 
     def accept(self):
+        """Saves all data to the wall object and commits to the database."""
         self.wall.name = self.wall_name_lineEdit.text()
         self._save_tribs_data()
         self.db_session.add(self.wall)

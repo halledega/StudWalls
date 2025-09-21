@@ -281,13 +281,27 @@
         <attribute name="title">
          <string>Results</string>
         </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QTextEdit" name="result_detailed_textEdit">
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-          </widget>
+          <widget class="QTableWidget" name="results_tableWidget"/>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QPushButton" name="finalize_pushButton">
+             <property name="text">
+              <string>Finalize Results</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="generate_report_pushButton">
+             <property name="text">
+              <string>Generate Report</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>

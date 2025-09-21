@@ -9,9 +9,9 @@ c) keep the list below updated with new tasks and checking off complete ones
 1.  Complete actions in Define menu (review @src/ui/main_window/main_ui, sub task for each action not implemented)
     - [x] Implement "Materials" action
         - [x] Allow adding new categories, types, grades and species to a material.
-    - [ ] Implement "Studs" action
-    - [ ] Implement "Loads" action
-    - [ ] Implement "Load Combinations" action
+    - [x] Implement "Studs" action
+    - [x] Implement "Loads" action
+    - [x] Implement "Load Combinations" action
 2.  Complete actions in File and Help menu (again review he ui file and make sub tasks based on each item not implemented)
     - [ ] Implement "New" action
     - [ ] Implement "Open" action
@@ -32,3 +32,16 @@ c) keep the list below updated with new tasks and checking off complete ones
 7.  Fully document all code so even a novice python programmer or someone unfamiliar with PySide can review the code
 8.  Create executable with pysintaller or similar. I'd like you to suggest some options with pros and cons features etc.
 9.  Run application after any major refactoring to check for regressions. (Recurring task)
+10. Clean up table widget columns to use available space.
+    - [ ] Adjust dialog sizes for tables with many columns.
+11. Update and finalize design output.
+    - [ ] Save all results to database.
+    - [ ] Clear results when inputs have changed.
+    - [ ] Add action to run menu to display results.
+    - [ ] Allow users to select from a list of valid results for each floor. This could be in a separate dialog or the results tab of the main window. A "Finalize Results" button should be included that saves the final chosen results to the database (separately from the global results). By default, the 'final results' should be the results with the lowest wood volume of all the combos on a per-floor basis.
+    - [ ] Display final results in formatted output (see `OutPutExample.txt` for formatting).
+        - Detailed Results Table Columns: Load Combo, section, materials, grade, kd, kh, kse, ksc, kt, Cf, Pr, DC
+        - Results Summary Table Columns: Same as Detailed Results, but only for the governing load combo.
+        - Input Data Tables: Use DB tables as a reference for columns.
+        - Engineer field should be part of project data (use dummy info for now).
+    - [ ] Add option to print/export final results to a PDF.
