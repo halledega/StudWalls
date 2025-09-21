@@ -1,0 +1,44 @@
+﻿Date: [Date]
+Project Number: [Project Number]
+Project Name: [Project Name]
+Engineer: [Engineer]
+
+Wall Number: [Wall Number]
+
+Load Cases
+
+[Table of Load Cases]
+
+Load Combinations
+
+[Table of Load Combinations]
+
+Stud Sections
+
+[Table of stud sections]
+
+Materials
+
+[Table of materials]
+
+Levels
+
+[Table of Levels]
+
+Unfactored Total Loads Per Floor (kN/m)
+
+[Table of loads per floor]
+
+Factored Total Loads Per Floor (kN/m)
+
+[Table of combo per floor]
+
+Results Summary
+
+[Result Summary Table] this will be final results per floor
+
+Detailed Results
+
+Floor: [Floor Name]
+
+[Table of detail results] add one table per floor and shown valid result for each combo with that floor
