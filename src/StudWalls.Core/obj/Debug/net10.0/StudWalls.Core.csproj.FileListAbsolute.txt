@@ -1,0 +1,13 @@
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/bin/Debug/net10.0/StudWalls.Core.deps.json
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/bin/Debug/net10.0/StudWalls.Core.dll
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/bin/Debug/net10.0/StudWalls.Core.pdb
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.csproj.AssemblyReference.cache
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.GeneratedMSBuildEditorConfig.editorconfig
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.AssemblyInfoInputs.cache
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.AssemblyInfo.cs
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.csproj.CoreCompileInputs.cache
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.sourcelink.json
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.dll
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/refint/StudWalls.Core.dll
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/StudWalls.Core.pdb
+/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/obj/Debug/net10.0/ref/StudWalls.Core.dll

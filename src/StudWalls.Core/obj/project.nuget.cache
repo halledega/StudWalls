@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "dgSpecHash": "aBQK0SKUrsM=",
+  "success": true,
+  "projectFilePath": "/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/StudWalls.Core.csproj",
+  "expectedPackageFiles": [
+    "/home/mwrh/.nuget/packages/communitytoolkit.mvvm/8.4.2/communitytoolkit.mvvm.8.4.2.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/microsoft.data.sqlite/8.0.10/microsoft.data.sqlite.8.0.10.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/microsoft.data.sqlite.core/8.0.10/microsoft.data.sqlite.core.8.0.10.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/skiasharp/3.119.4/skiasharp.3.119.4.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/skiasharp.nativeassets.macos/3.119.4/skiasharp.nativeassets.macos.3.119.4.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/skiasharp.nativeassets.win32/3.119.4/skiasharp.nativeassets.win32.3.119.4.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/sqlitepclraw.bundle_e_sqlite3/2.1.6/sqlitepclraw.bundle_e_sqlite3.2.1.6.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/sqlitepclraw.core/2.1.6/sqlitepclraw.core.2.1.6.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/sqlitepclraw.lib.e_sqlite3/2.1.6/sqlitepclraw.lib.e_sqlite3.2.1.6.nupkg.sha512",
+    "/home/mwrh/.nuget/packages/sqlitepclraw.provider.e_sqlite3/2.1.6/sqlitepclraw.provider.e_sqlite3.2.1.6.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.6 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q",
+      "projectPath": "/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/StudWalls.Core.csproj",
+      "warningLevel": 1,
+      "filePath": "/home/mwrh/Documents/Repos/StudWalls/src/StudWalls.Core/StudWalls.Core.csproj",
+      "libraryId": "SQLitePCLRaw.lib.e_sqlite3",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}

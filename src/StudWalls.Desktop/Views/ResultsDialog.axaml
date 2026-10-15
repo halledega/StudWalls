@@ -1,0 +1,85 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:StudWalls.Desktop.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="860" d:DesignHeight="560"
+        x:Class="StudWalls.Desktop.Views.ResultsDialog"
+        x:DataType="vm:ResultsViewModel"
+        Title="{Binding Title}"
+        Width="880" Height="580" MinWidth="700" MinHeight="420"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="14">
+        <!-- Top Filter & Summary Header -->
+        <Border Grid.Row="0" Margin="0,0,0,10">
+            <StackPanel Spacing="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" />
+                        <TextBlock Text="{Binding ResultsSummaryText}" Foreground="Gray" FontSize="12" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Filter Controls Bar -->
+                <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                        Padding="10,8" CornerRadius="4">
+                    <StackPanel Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="Filter by Level:" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <ComboBox ItemsSource="{Binding LevelFilterOptions}"
+                                      SelectedItem="{Binding SelectedLevelFilter}"
+                                      Width="160" VerticalAlignment="Center">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <CheckBox Content="Show Passing Only (D/C ≤ 1.00)"
+                                  IsChecked="{Binding ShowPassingOnly}"
+                                  VerticalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- Sizing Permutations Table (Passing Options) -->
+        <Border Grid.Row="1" BorderBrush="LightGray" BorderThickness="1" CornerRadius="3">
+            <DataGrid ItemsSource="{Binding FilteredResults}"
+                      SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
+                      AutoGenerateColumns="False" CanUserResizeColumns="True"
+                      CanUserSortColumns="True"
+                      IsReadOnly="False" GridLinesVisibility="All">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Level" Binding="{Binding WallStory.Story.Name}" IsReadOnly="True" Width="100"/>
+                    <DataGridTextColumn Header="Member" Binding="{Binding PlysSection}" IsReadOnly="True" Width="110"/>
+                    <DataGridTextColumn Header="Spacing" Binding="{Binding FormattedSpacing}" IsReadOnly="True" Width="90"/>
+                    <DataGridTextColumn Header="Gov D/C" Binding="{Binding DcRatio, StringFormat={}{0:F2}}" IsReadOnly="True" Width="90"/>
+                    <DataGridTextColumn Header="Wood Volume" Binding="{Binding WoodVolume, StringFormat={}{0:F3}}" IsReadOnly="True" Width="120"/>
+                    <DataGridCheckBoxColumn Header="Final Selection" Binding="{Binding IsFinal}" IsReadOnly="False" Width="120"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Bottom Action Bar -->
+        <Border Grid.Row="2" Margin="0,12,0,0">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Sizing Criteria..." Command="{Binding OpenSizingCriteriaCommand}"
+                            ToolTip.Tip="Adjust search space and re-run sizing" />
+                    <Button Content="Generate Report..." Command="{Binding GenerateReportCommand}"
+                            ToolTip.Tip="Open calculation summary and PDF exporter" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Finalize &amp; Save" Command="{Binding FinalizeResultsCommand}"
+                            ToolTip.Tip="Save selected final design choices and close" />
+                    <Button Content="Close" Command="{Binding CloseCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

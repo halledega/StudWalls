@@ -1,0 +1,46 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:StudWalls.Desktop.ViewModels"
+        x:Class="StudWalls.Desktop.Views.CalculationLogDialog"
+        x:DataType="vm:CalculationLogViewModel"
+        Title="Calculation Log &amp; Analysis Summary"
+        Width="760" Height="560"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <Design.DataContext>
+        <vm:CalculationLogViewModel />
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="14">
+        <!-- Header -->
+        <Border Grid.Row="0" Margin="0,0,0,10" BorderBrush="LightGray" BorderThickness="0,0,0,1" Padding="0,0,0,8">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="3">
+                    <TextBlock Text="CSA O86-20 Analysis &amp; Sizing Log" FontWeight="Bold" FontSize="15" />
+                    <TextBlock Text="{Binding WallName, StringFormat='Active Wall: {0} — Cumulative load accumulation &amp; code check permutations'}"
+                               Foreground="Gray" FontSize="12" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Monospace Calculation Summary Body -->
+        <TextBox Grid.Row="1"
+                 Text="{Binding LogContent}"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 FontFamily="Monospace"
+                 FontSize="11" />
+
+        <!-- Footer Actions -->
+        <Border Grid.Row="2" Margin="0,10,0,0" Padding="0,8,0,0" BorderBrush="LightGray" BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Grid.Column="0" Text="Analysis complete. Design solutions updated in results table."
+                           Foreground="Gray" VerticalAlignment="Center" FontSize="11" />
+                <Button Grid.Column="1" Content="Copy Log" Command="{Binding CopyToClipboardCommand}" Margin="0,0,8,0" />
+                <Button Grid.Column="2" Content="Close" Command="{Binding CloseCommand}" IsDefault="True" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

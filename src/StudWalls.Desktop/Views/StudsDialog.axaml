@@ -1,0 +1,79 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:StudWalls.Desktop.ViewModels"
+        x:Class="StudWalls.Desktop.Views.StudsDialog"
+        x:DataType="vm:StudsViewModel"
+        Title="Define Studs (Cross-Sections &amp; Materials)"
+        Width="740" Height="500"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="*,Auto" Margin="10">
+        <!-- Main Body: List on Left, Properties on Right -->
+        <Grid Grid.Row="0" ColumnDefinitions="260,10,*">
+            <ListBox Grid.Column="0" ItemsSource="{Binding DisplayStuds}" SelectedItem="{Binding SelectedStud}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <ScrollViewer Grid.Column="2">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Stud Definition" FontWeight="Bold"/>
+
+                    <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Stud Name:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding EditName}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Material:" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding AvailableMaterials}" SelectedItem="{Binding EditMaterial}" HorizontalAlignment="Stretch" Margin="0,2">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Ply Width (mm):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EditWidth}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Depth (mm):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding EditDepth}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Number of Plys:" VerticalAlignment="Center"/>
+                        <NumericUpDown Grid.Row="4" Grid.Column="1" Value="{Binding EditPlys}" Minimum="1" Maximum="5" Margin="0,2"/>
+                    </Grid>
+
+                    <Separator Margin="0,6"/>
+
+                    <TextBlock Text="Calculated Cross-Section Properties:" FontWeight="Bold"/>
+                    <Grid ColumnDefinitions="160,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Gross Area (Ag, mm²):"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CalculatedAg, StringFormat={}{0:F1}}" FontWeight="SemiBold"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Ix (mm⁴, Strong Axis):"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CalculatedIx, StringFormat={}{0:E2}}" FontWeight="SemiBold"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Iy (mm⁴, Weak Axis):"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CalculatedIy, StringFormat={}{0:E2}}" FontWeight="SemiBold"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Sx (mm³, Strong Axis):"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CalculatedSx, StringFormat={}{0:F0}}" FontWeight="SemiBold"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Sy (mm³, Weak Axis):"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding CalculatedSy, StringFormat={}{0:F0}}" FontWeight="SemiBold"/>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Bottom Action Bar -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+            <Button Content="New Stud" Command="{Binding NewStudCommand}" />
+            <Button Content="Save Stud" Command="{Binding SaveStudCommand}" />
+            <Button Content="Delete Stud" Command="{Binding DeleteStudCommand}" />
+            <Button Content="Close" Command="{Binding CloseCommand}" />
+        </StackPanel>
+    </Grid>
+</Window>

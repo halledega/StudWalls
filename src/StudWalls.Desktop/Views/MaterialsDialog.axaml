@@ -1,0 +1,83 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:StudWalls.Desktop.ViewModels"
+        x:Class="StudWalls.Desktop.Views.MaterialsDialog"
+        x:DataType="vm:MaterialsViewModel"
+        Title="Define Materials (CSA O86-20)"
+        Width="780" Height="540"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+        <!-- Filter Bar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,10">
+            <CheckBox Content="Filter Category:" IsChecked="{Binding FilterCategoryEnabled}" />
+            <ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategoryFilter}" Width="160" IsEnabled="{Binding FilterCategoryEnabled}" />
+
+            <CheckBox Content="Filter Species:" IsChecked="{Binding FilterSpeciesEnabled}" />
+            <ComboBox ItemsSource="{Binding SpeciesList}" SelectedItem="{Binding SelectedSpeciesFilter}" Width="160" IsEnabled="{Binding FilterSpeciesEnabled}" />
+        </StackPanel>
+
+        <!-- Main Body: List on Left, Properties Editor on Right -->
+        <Grid Grid.Row="1" ColumnDefinitions="260,10,*">
+            <!-- Materials List -->
+            <ListBox Grid.Column="0" ItemsSource="{Binding DisplayMaterials}" SelectedItem="{Binding SelectedMaterial}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!-- Properties Editor -->
+            <ScrollViewer Grid.Column="2">
+                <StackPanel Spacing="6">
+                    <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Material Name:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding EditName}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Category:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EditCategory}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Species:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EditSpecies}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Grade:" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding EditGrade}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Type (Sawn/MSR/MEL):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding EditMaterialType}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Bending (Fb, MPa):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding EditFb}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Shear (Fv, MPa):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding EditFv}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Compression (Fc, MPa):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="7" Grid.Column="1" Text="{Binding EditFc}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="Perp Comp (Fcp, MPa):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="8" Grid.Column="1" Text="{Binding EditFcp}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="9" Grid.Column="0" Text="Tension (Ft, MPa):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="9" Grid.Column="1" Text="{Binding EditFt}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="10" Grid.Column="0" Text="Elasticity (E, MPa):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="10" Grid.Column="1" Text="{Binding EditE}" Margin="0,2"/>
+
+                        <TextBlock Grid.Row="11" Grid.Column="0" Text="5th Percentile (E05, MPa):" VerticalAlignment="Center"/>
+                        <TextBox Grid.Row="11" Grid.Column="1" Text="{Binding EditE05}" Margin="0,2"/>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Bottom Action Bar -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+            <Button Content="New Material" Command="{Binding NewMaterialCommand}" />
+            <Button Content="Save Material" Command="{Binding SaveMaterialCommand}" />
+            <Button Content="Delete Material" Command="{Binding DeleteMaterialCommand}" />
+            <Button Content="Close" Command="{Binding CloseCommand}" />
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,0 +1,110 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:StudWalls.Desktop.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="620" d:DesignHeight="540"
+        x:Class="StudWalls.Desktop.Views.SizingCriteriaDialog"
+        x:DataType="vm:SizingCriteriaViewModel"
+        Title="{Binding Title}"
+        Width="640" Height="560" MinWidth="540" MinHeight="440"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16">
+        <!-- Header Section -->
+        <Border Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Stud Sizing Criteria &amp; Permutations" FontWeight="Bold" FontSize="16" />
+                <TextBlock Text="{Binding WallSummaryText}" FontWeight="SemiBold" FontSize="12" Foreground="DarkSlateGray" />
+                <TextBlock Text="Select the candidate lumber sections, spacings, and grades to evaluate during automated analysis per CSA O86-20."
+                           Foreground="Gray" FontSize="11" TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <!-- Main Options Grid -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,4">
+                <!-- Group 1: Nominal Lumber Sections -->
+                <Border Grid.Row="0" Grid.Column="0" BorderBrush="LightGray" BorderThickness="1"
+                        CornerRadius="4" Padding="10" Margin="0,0,6,8">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Nominal Stud Sections" FontWeight="Bold" FontSize="13" />
+                        <TextBlock Text="Lumber depth dimensions" Foreground="Gray" FontSize="11" />
+                        <ItemsControl ItemsSource="{Binding SectionOptions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected}" Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Group 2: Center-to-Center Spacings -->
+                <Border Grid.Row="0" Grid.Column="1" BorderBrush="LightGray" BorderThickness="1"
+                        CornerRadius="4" Padding="10" Margin="6,0,0,8">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="On-Center Spacings" FontWeight="Bold" FontSize="13" />
+                        <TextBlock Text="Framing module spacings" Foreground="Gray" FontSize="11" />
+                        <ItemsControl ItemsSource="{Binding SpacingOptions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected}" Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Group 3: Built-Up Plys -->
+                <Border Grid.Row="1" Grid.Column="0" BorderBrush="LightGray" BorderThickness="1"
+                        CornerRadius="4" Padding="10" Margin="0,4,6,0">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Member Ply Configurations" FontWeight="Bold" FontSize="13" />
+                        <TextBlock Text="Built-up compression columns" Foreground="Gray" FontSize="11" />
+                        <ItemsControl ItemsSource="{Binding PlyOptions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected}" Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Group 4: Species & Lumber Grades -->
+                <Border Grid.Row="1" Grid.Column="1" BorderBrush="LightGray" BorderThickness="1"
+                        CornerRadius="4" Padding="10" Margin="6,4,0,0">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Wood Species &amp; Grades" FontWeight="Bold" FontSize="13" />
+                        <TextBlock Text="Materials in project catalog" Foreground="Gray" FontSize="11" />
+                        <ItemsControl ItemsSource="{Binding MaterialOptions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsSelected}" Margin="0,2" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- Bottom Actions -->
+        <Border Grid.Row="2" Margin="0,14,0,0" Padding="0,6,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock Text="Target Max D/C:" VerticalAlignment="Center" FontSize="12" />
+                    <NumericUpDown Value="{Binding MaxTargetDcRatio}" Minimum="0.50" Maximum="1.00"
+                                   Increment="0.05" FormatString="F2" Width="100" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Content="Run Sizing" Command="{Binding RunSizingCommand}"
+                            Classes="accent" FontWeight="Bold" ToolTip.Tip="Execute sizing with selected criteria" />
+                    <Button Content="Cancel" Command="{Binding CancelCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

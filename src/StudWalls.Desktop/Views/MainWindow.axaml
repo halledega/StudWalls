@@ -1,0 +1,269 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:StudWalls.Desktop.ViewModels"
+        xmlns:controls="using:StudWalls.Desktop.Controls"
+        x:Class="StudWalls.Desktop.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="StudWalls - Structural Wood Stud Sizing (CSA O86-20)"
+        Width="1280" Height="840"
+        WindowStartupLocation="CenterScreen">
+
+    <!--
+        StudWalls Main Application Window
+        Architecture:
+        1. Top: Menu Bar & Traditional Command Toolbar with Button Groups for each Menu.
+        2. Bottom: Application Status Bar with active operation details.
+        3. Center Workspace (Grid with ColumnSplitter and RowSplitter):
+           - Left Sidebar: Project Metadata, Active Wall Selection, and Engineering Log.
+           - Right Upper Area: Building Plan View & Stud Cross-Section Detail Canvases.
+           - Right Lower Area: Resizable / Dockable Engineering Results Panel opening up below the canvas.
+    -->
+
+    <Design.DataContext>
+        <vm:MainViewModel/>
+    </Design.DataContext>
+
+    <DockPanel LastChildFill="True">
+        <!-- ================= 1. MAIN MENU BAR ================= -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New Project" Command="{Binding NewProjectCommand}" />
+                <MenuItem Header="_Open Project..." Command="{Binding OpenProjectCommand}" />
+                <MenuItem Header="_Save" Command="{Binding SaveProjectCommand}" />
+                <MenuItem Header="Save _As..." Command="{Binding SaveProjectAsCommand}" />
+                <Separator/>
+                <MenuItem Header="_Preferences..." Command="{Binding OpenPreferencesCommand}" />
+                <Separator/>
+                <MenuItem Header="_Export to JSON..." Command="{Binding ExportJsonCommand}" />
+                <MenuItem Header="_Import from JSON..." Command="{Binding ImportJsonCommand}" />
+                <Separator/>
+                <MenuItem Header="_Exit" Click="OnExitClick" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_New Wall" Command="{Binding NewWallCommand}" />
+                <MenuItem Header="_Copy Wall" Command="{Binding CopyWallCommand}" />
+                <MenuItem Header="_Delete Wall" Command="{Binding DeleteWallCommand}" />
+                <Separator/>
+                <MenuItem Header="_Wall Configuration..." Command="{Binding OpenWallEditorCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Define">
+                <MenuItem Header="_Materials..." Command="{Binding OpenMaterialsCommand}" />
+                <MenuItem Header="_Studs..." Command="{Binding OpenStudsCommand}" />
+                <MenuItem Header="_Levels..." Command="{Binding OpenLevelsCommand}" />
+                <MenuItem Header="_Loads..." Command="{Binding OpenLoadsCommand}" />
+                <MenuItem Header="_Load Combinations..." Command="{Binding OpenLoadCombosCommand}" />
+                <MenuItem Header="_Walls..." Command="{Binding OpenWallEditorCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Run">
+                <MenuItem Header="_Analyze and Code Check" Command="{Binding RunCalculationCommand}" />
+                <MenuItem Header="_Engineering Results Dialog..." Command="{Binding OpenResultsDialogCommand}" />
+                <MenuItem Header="_Generate Report..." Command="{Binding GenerateReportCommand}" />
+                <Separator/>
+                <MenuItem Header="Toggle _Results Dock" Command="{Binding ToggleResultsCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About StudWalls..." Command="{Binding OpenAboutCommand}" />
+            </MenuItem>
+        </Menu>
+
+        <!-- ================= 2. TRADITIONAL COMMAND TOOLBAR ================= -->
+        <!--
+            Contains dedicated button groups matching each menu in the application.
+            Each group provides direct single-click access to every corresponding menu command.
+            Divided by standard vertical separators and wrapped in a horizontal ScrollViewer for responsiveness.
+        -->
+        <Border DockPanel.Dock="Top" BorderBrush="LightGray" BorderThickness="0,0,0,1"
+                Background="{DynamicResource SystemControlBackgroundAltHighBrush}" Padding="6,3">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <!-- Group 1: File Operations -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Content="New" Command="{Binding NewProjectCommand}" ToolTip.Tip="New Project" />
+                        <Button Content="Open" Command="{Binding OpenProjectCommand}" ToolTip.Tip="Open Project..." />
+                        <Button Content="Save" Command="{Binding SaveProjectCommand}" ToolTip.Tip="Save Project" />
+                        <Button Content="Save As" Command="{Binding SaveProjectAsCommand}" ToolTip.Tip="Save Project As..." />
+                    </StackPanel>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="22" Fill="LightGray" Margin="2,0" />
+
+                    <!-- Group 2: Edit Operations -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Content="New Wall" Command="{Binding NewWallCommand}" ToolTip.Tip="Create New Wall" />
+                        <Button Content="Copy Wall" Command="{Binding CopyWallCommand}" ToolTip.Tip="Duplicate Selected Wall" />
+                        <Button Content="Delete Wall" Command="{Binding DeleteWallCommand}" ToolTip.Tip="Delete Selected Wall" />
+                        <Button Content="Wall Config" Command="{Binding OpenWallEditorCommand}" ToolTip.Tip="Wall Configuration..." />
+                    </StackPanel>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="22" Fill="LightGray" Margin="2,0" />
+
+                    <!-- Group 3: Define Operations -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Content="Materials" Command="{Binding OpenMaterialsCommand}" ToolTip.Tip="Wood Materials..." />
+                        <Button Content="Studs" Command="{Binding OpenStudsCommand}" ToolTip.Tip="Stud Sections..." />
+                        <Button Content="Levels" Command="{Binding OpenLevelsCommand}" ToolTip.Tip="Building Stories/Levels..." />
+                        <Button Content="Loads" Command="{Binding OpenLoadsCommand}" ToolTip.Tip="Specified Loads..." />
+                        <Button Content="Load Combos" Command="{Binding OpenLoadCombosCommand}" ToolTip.Tip="Load Combinations..." />
+                        <Button Content="Walls" Command="{Binding OpenWallEditorCommand}" ToolTip.Tip="Walls..." />
+                    </StackPanel>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="22" Fill="LightGray" Margin="2,0" />
+
+                    <!-- Group 4: Run Operations -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Content="Run Sizing" Command="{Binding RunCalculationCommand}" FontWeight="Bold" ToolTip.Tip="Analyze and Code Check (CSA O86-20)" />
+                        <Button Content="Results" Command="{Binding OpenResultsDialogCommand}" ToolTip.Tip="Open Results Dialog with Level Filter..." />
+                        <Button Content="Report" Command="{Binding GenerateReportCommand}" ToolTip.Tip="Generate Calculation Report..." />
+                        <Button Content="Toggle Dock" Command="{Binding ToggleResultsCommand}" ToolTip.Tip="Toggle Bottom Results Dock" />
+                    </StackPanel>
+
+                    <!-- Divider -->
+                    <Rectangle Width="1" Height="22" Fill="LightGray" Margin="2,0" />
+
+                    <!-- Group 5: Help Operations -->
+                    <StackPanel Orientation="Horizontal" Spacing="2">
+                        <Button Content="About" Command="{Binding OpenAboutCommand}" ToolTip.Tip="About StudWalls..." />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ================= 3. APPLICATION STATUS BAR ================= -->
+        <Border DockPanel.Dock="Bottom" BorderBrush="LightGray" BorderThickness="0,1,0,0" Padding="8,4">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="CSA O86-20 / NBCC 2020" Foreground="Gray" VerticalAlignment="Center" />
+            </Grid>
+        </Border>
+
+        <!-- ================= 4. MAIN WORKSPACE (RESIZABLE SIDEBAR + WORKSPACE) ================= -->
+        <Grid ColumnDefinitions="320,Auto,*">
+            <!-- Left Sidebar: ETABS-style Model Explorer -->
+            <Border Grid.Column="0" BorderBrush="LightGray" BorderThickness="0,0,1,0" Padding="8"
+                    Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Model Explorer Header -->
+                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                        <TextBlock Grid.Column="0" Text="Model Explorer" FontWeight="Bold" FontSize="13" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="Double-click to edit" Foreground="Gray" FontSize="11" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- Model Explorer Hierarchical TreeView -->
+                    <Border Grid.Row="1" BorderBrush="LightGray" BorderThickness="1" CornerRadius="3">
+                        <TreeView ItemsSource="{Binding ExplorerNodes}"
+                                  SelectedItem="{Binding SelectedExplorerNode, Mode=TwoWay}"
+                                  DoubleTapped="OnTreeViewDoubleTapped">
+                            <TreeView.Styles>
+                                <Style Selector="TreeViewItem" x:DataType="vm:ModelExplorerNode">
+                                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                </Style>
+                            </TreeView.Styles>
+                            <TreeView.ItemTemplate>
+                                <TreeDataTemplate ItemsSource="{Binding Children}" x:DataType="vm:ModelExplorerNode">
+                                    <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
+                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Subtitle}" Foreground="Gray" FontSize="11" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </TreeDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Vertical Splitter between Sidebar and Main Canvas Workspace -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="LightGray" ResizeDirection="Columns" />
+
+            <!-- Right Workspace: Canvas Area (Top) + Resizable Results Panel (Bottom) -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <!-- Row 0: Canvas Area -->
+                    <RowDefinition Height="*" MinHeight="160" />
+                    <!-- Row 1: Splitter -->
+                    <RowDefinition Height="Auto" />
+                    <!-- Row 2: Bottom Resizable Results Panel -->
+                    <RowDefinition Height="{Binding ResultsRowHeight, Mode=TwoWay}" MinHeight="32" />
+                </Grid.RowDefinitions>
+
+                <!-- Upper Section: Main Graphics Canvas & Controls -->
+                <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="6,4,6,0">
+                    <!-- Canvas Toolbar Controls -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center" Margin="8,4">
+                        <CheckBox Content="Show Tributary Widths" IsChecked="{Binding ShowTributaries}" />
+                        <CheckBox Content="Show Applied Loads" IsChecked="{Binding ShowLoads}" />
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="Level:" VerticalAlignment="Center"/>
+                            <ComboBox ItemsSource="{Binding Stories}" SelectedItem="{Binding ActiveStory}" Width="140">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Graphical Display: Building Plan View Canvas -->
+                    <Border Grid.Row="1" BorderBrush="LightGray" BorderThickness="1" Margin="0,4,0,0">
+                        <controls:WallGraphicsCanvas
+                            Walls="{Binding Walls}"
+                            SelectedWall="{Binding SelectedWall}"
+                            ActiveStory="{Binding ActiveStory}"
+                            ShowTributaries="{Binding ShowTributaries}"
+                            ShowLoads="{Binding ShowLoads}" />
+                    </Border>
+                </Grid>
+
+                <!-- Horizontal Splitter between Canvas and Results Panel (active when open) -->
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="LightGray"
+                              ResizeDirection="Rows" IsVisible="{Binding IsResultsOpen}" />
+
+                <!-- Lower Section: Resizable / Dockable Results Panel -->
+                <Border Grid.Row="2" BorderBrush="LightGray" BorderThickness="0,1,0,0"
+                        Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+                    <Grid RowDefinitions="Auto,*">
+                        <!-- Dock Header Bar -->
+                        <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="8,4">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <TextBlock Text="Engineering Results &amp; Member Sizing" FontWeight="Bold" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding ResultsCountText}" Foreground="Gray" VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                    <Button Content="Open in Dialog..." Command="{Binding OpenResultsDialogCommand}"
+                                            ToolTip.Tip="Open dedicated results dialog with per-level filtering" />
+                                    <Button Content="Finalize Results" Command="{Binding FinalizeResultsCommand}"
+                                            IsVisible="{Binding IsResultsOpen}" ToolTip.Tip="Save and lock selected final design choices" />
+                                    <Button Content="Generate Report..." Command="{Binding GenerateReportCommand}"
+                                            IsVisible="{Binding IsResultsOpen}" ToolTip.Tip="Open calculation summary and PDF exporter" />
+                                    <Button Content="{Binding ResultsToggleLabel}" Command="{Binding ToggleResultsCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Sizing Results Panel (Passing Options Only) -->
+                        <Grid Grid.Row="1" IsVisible="{Binding IsResultsOpen}" Margin="4">
+                            <DataGrid ItemsSource="{Binding CurrentResults}"
+                                      SelectedItem="{Binding SelectedResult, Mode=TwoWay}"
+                                      AutoGenerateColumns="False" CanUserResizeColumns="True"
+                                      CanUserSortColumns="True"
+                                      IsReadOnly="False" GridLinesVisibility="All">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Level" Binding="{Binding WallStory.Story.Name}" IsReadOnly="True" Width="80"/>
+                                    <DataGridTextColumn Header="Member" Binding="{Binding PlysSection}" IsReadOnly="True" Width="100"/>
+                                    <DataGridTextColumn Header="Spacing" Binding="{Binding FormattedSpacing}" IsReadOnly="True" Width="90"/>
+                                    <DataGridTextColumn Header="Gov D/C" Binding="{Binding DcRatio, StringFormat={}{0:F2}}" IsReadOnly="True" Width="90"/>
+                                    <DataGridTextColumn Header="Wood Volume" Binding="{Binding WoodVolume, StringFormat={}{0:F3}}" IsReadOnly="True" Width="110"/>
+                                    <DataGridCheckBoxColumn Header="Final Selection" Binding="{Binding IsFinal}" IsReadOnly="False" Width="120"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>

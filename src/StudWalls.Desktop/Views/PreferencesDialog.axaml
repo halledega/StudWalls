@@ -1,0 +1,125 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:StudWalls.Desktop.ViewModels"
+        x:Class="StudWalls.Desktop.Views.PreferencesDialog"
+        x:DataType="vm:PreferencesViewModel"
+        Title="Application &amp; Engineering Preferences"
+        Width="580" Height="520"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <!--
+        Preferences Configuration Dialog
+        Provides straightforward, out-of-the-box controls allowing the structural engineer
+        to configure measurement units, code compliance limits (CSA O86-20), and geometric defaults.
+    -->
+    <Grid RowDefinitions="*,Auto" Margin="16">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Spacing="16">
+                <!-- Group 1: Units & Standards -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Units &amp; Design Standards" FontWeight="Bold" />
+                    <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto" Margin="8,0,0,0">
+                        <!-- Measurement Unit System -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Measurement System:" VerticalAlignment="Center" />
+                        <ComboBox Grid.Row="0" Grid.Column="1"
+                                  ItemsSource="{Binding AvailableUnitSystems}"
+                                  SelectedItem="{Binding SelectedUnitSystem}"
+                                  HorizontalAlignment="Stretch" Margin="0,2" />
+
+                        <!-- Design Standard Note -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Active Standard:" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="CSA O86-20 / NBCC 2020" Foreground="Gray" VerticalAlignment="Center" Margin="0,4" />
+                    </Grid>
+                </StackPanel>
+
+                <Separator/>
+
+                <!-- Group 2: CSA O86 Code Compliance Thresholds -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="CSA O86-20 Engineering Criteria" FontWeight="Bold" />
+                    <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto" Margin="8,0,0,0">
+                        <!-- Maximum Allowable Slenderness Ratio (Cc = Lu / d) per Cl 6.5.6.2.2 -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Max Slenderness (Cc, Cl 6.5.6.2.2):" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Row="0" Grid.Column="1"
+                                       Value="{Binding MaxAllowableCc}"
+                                       Minimum="10" Maximum="50" Increment="1" FormatString="0"
+                                       Margin="0,2" />
+
+                        <!-- Target Demand-to-Capacity Ratio (Pf / Pr) -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Max Target D/C Ratio:" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Row="1" Grid.Column="1"
+                                       Value="{Binding MaxTargetDcRatio}"
+                                       Minimum="0.50" Maximum="1.00" Increment="0.05" FormatString="0.00"
+                                       Margin="0,2" />
+
+                        <!-- Service Condition Factor (Ks) per Cl 6.4.2 -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Service Condition Factor (Ks):" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Row="2" Grid.Column="1"
+                                       Value="{Binding DefaultServiceConditionFactor}"
+                                       Minimum="0.50" Maximum="1.00" Increment="0.05" FormatString="0.00"
+                                       Margin="0,2" />
+                    </Grid>
+                </StackPanel>
+
+                <Separator/>
+
+                <!-- Group 3: Default Geometry & Framing -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Framing Defaults for New Walls" FontWeight="Bold" />
+                    <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="8,0,0,0">
+                        <!-- Default Story Height (mm) -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Default Story Height (mm):" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Row="0" Grid.Column="1"
+                                       Value="{Binding DefaultStoryHeight}"
+                                       Minimum="1500" Maximum="6000" Increment="100" FormatString="0"
+                                       Margin="0,2" />
+
+                        <!-- Default Wall Self-Weight (kN/m) -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Default Self-Weight (kN/m):" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Row="1" Grid.Column="1"
+                                       Value="{Binding DefaultWallSelfWeight}"
+                                       Minimum="0.10" Maximum="2.00" Increment="0.05" FormatString="0.00"
+                                       Margin="0,2" />
+
+                        <!-- Default Stud Spacing (mm) -->
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Default Stud Spacing (mm):" VerticalAlignment="Center" />
+                        <NumericUpDown Grid.Row="2" Grid.Column="1"
+                                       Value="{Binding DefaultStudSpacing}"
+                                       Minimum="150" Maximum="800" Increment="10" FormatString="0.0"
+                                       Margin="0,2" />
+
+                        <!-- Default Lumber Material Species/Grade -->
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Default Lumber Material:" VerticalAlignment="Center" />
+                        <ComboBox Grid.Row="3" Grid.Column="1"
+                                  ItemsSource="{Binding AvailableMaterials}"
+                                  SelectedItem="{Binding SelectedMaterialName}"
+                                  HorizontalAlignment="Stretch" Margin="0,2" />
+                    </Grid>
+                </StackPanel>
+
+                <Separator/>
+
+                <!-- Group 4: Title Block Defaults -->
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Report Title Block Defaults" FontWeight="Bold" />
+                    <Grid ColumnDefinitions="220,*" RowDefinitions="Auto,Auto" Margin="8,0,0,0">
+                        <!-- Default Engineer Name -->
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Default Engineer Name:" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding DefaultEngineer}" Margin="0,2" />
+
+                        <!-- Default Firm Name -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Engineering Firm Name:" VerticalAlignment="Center" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding DefaultCompany}" Margin="0,2" />
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Action Buttons (Save / Cancel) -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,16,0,0">
+            <Button Content="Save Preferences" Command="{Binding SaveCommand}" Width="130" HorizontalContentAlignment="Center"/>
+            <Button Content="Cancel" Command="{Binding CancelCommand}" Width="90" HorizontalContentAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>
